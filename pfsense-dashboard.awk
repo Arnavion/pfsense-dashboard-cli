@@ -10,13 +10,13 @@ BEGIN {
 	interfaces[5] = "igb2"
 	interfaces[6] = "igb3"
 
-	services[1, "service_name"] = "dhcpd"; services[1, "process_name"] = "dhcpd"
-	services[2, "service_name"] = "dnsbl"; services[2, "process_name"] = "lighttpd_pfb"
-	services[3, "service_name"] = "dpinger"; services[3, "process_name"] = "dpinger"
-	services[4, "service_name"] = "ntpd"; services[4, "process_name"] = "ntpd"
-	services[5, "service_name"] = "sshd"; services[5, "process_name"] = "sshd"
-	services[6, "service_name"] = "syslogd"; services[6, "process_name"] = "syslogd"
-	services[7, "service_name"] = "unbound"; services[7, "process_name"] = "unbound"
+	services[1, "service_name"] = "dhcpd"; services[1, "process_name"] = "dhcpd"; services[1, "pidfile"] = ""
+	services[2, "service_name"] = "dnsbl"; services[2, "process_name"] = "lighttpd_pfb"; services[2, "pidfile"] = ""
+	services[3, "service_name"] = "dpinger"; services[3, "process_name"] = "dpinger"; services[3, "pidfile"] = "dpinger_WAN_DHCP~*.pid"
+	services[4, "service_name"] = "ntpd"; services[4, "process_name"] = "ntpd"; services[4, "pidfile"] = "ntpd.pid"
+	services[5, "service_name"] = "sshd"; services[5, "process_name"] = "sshd"; services[5, "pidfile"] = "sshd.pid"
+	services[6, "service_name"] = "syslogd"; services[6, "process_name"] = "syslogd"; services[6, "pidfile"] = "syslog.pid"
+	services[7, "service_name"] = "unbound"; services[7, "process_name"] = "unbound"; services[7, "pidfile"] = "unbound.pid"
 
 
 	# Dynamic constants
@@ -63,9 +63,15 @@ BEGIN {
 		disks[i, "smart_status_command"] = sprintf("smartctl -H '/dev/%s'", disk_name)
 	}
 
-	num_services = length(services) / 2
+	num_services = length(services) / 3
 	for (i = 1; i <= num_services; i++) {
-		services[i, "status_command"] = sprintf("pgrep -x '%s' > /dev/null; echo $?", services[i, "process_name"])
+		pidfile = services[i, "pidfile"]
+		if (pidfile == "") {
+			services[i, "status_command"] = sprintf("pgrep -x '%s' > /dev/null; echo $?", services[i, "process_name"])
+		}
+		else {
+			services[i, "status_command"] = sprintf("pgrep -F /var/run/%s -x '%s' > /dev/null; echo $?", pidfile, services[i, "process_name"])
+		}
 	}
 
 
@@ -369,7 +375,7 @@ BEGIN {
 
 		output = output sprintf("\nServices         : ")
 		first = 1
-		for (i = 1; i <= length(services) / 3; i++) {
+		for (i = 1; i <= length(services) / 4; i++) {
 			process_running = exec_line(services[i, "status_command"])
 			if (process_running == "0") {
 				service_status = "running"
