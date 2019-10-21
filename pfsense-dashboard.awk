@@ -196,7 +196,7 @@ BEGIN {
 
 
 		output = output sprintf("\nDisk usage       : ")
-		command = "df -t ufs"
+		command = "df -kt ufs"
 		first = 1
 		current_line = 0
 		while ((command | getline) > 0) {
