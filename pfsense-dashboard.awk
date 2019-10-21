@@ -209,7 +209,7 @@ BEGIN {
 			filesystem_space_used = $3
 			filesystem_space_max = $2
 			filesystem_space_used_percent = filesystem_space_used * 100 / filesystem_space_max
-			filesystem_space_max_human = human_size_base10(filesystem_space_max * 1000)
+			filesystem_space_max_human = human_size_base10(filesystem_space_max * 1024)
 
 			if (first) {
 				first = 0
