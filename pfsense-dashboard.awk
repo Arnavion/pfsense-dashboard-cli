@@ -36,9 +36,6 @@ BEGIN {
 	boot_time_usecs = boot_time_parts[7]
 	boot_time = boot_time_secs + boot_time_usecs / 1000000
 
-	cpu_previous_total = 0
-	cpu_previous_idle = 0
-
 	physical_memory = exec_line("sysctl -n hw.physmem") + 0
 	physical_memory_mib = physical_memory / 1048576
 	memory_max = exec_line("sysctl -n vm.stats.vm.v_page_count") + 0
@@ -76,6 +73,9 @@ BEGIN {
 
 
 	# Dynamic state
+
+	cpu_previous_total = 0
+	cpu_previous_idle = 0
 
 	for (i in interfaces) {
 		interface_previous_in_bytes[i] = 0
