@@ -416,7 +416,7 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				"%s %s %s %s %s %s %s %15s -> %s:%s",
+				"%s %s %s %s %s %s %4s %15s -> %s:%s",
 				$1,
 				$2,
 				$3,
