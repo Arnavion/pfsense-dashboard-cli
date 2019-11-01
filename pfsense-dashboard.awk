@@ -64,10 +64,10 @@ BEGIN {
 	for (i = 1; i <= num_services; i++) {
 		pidfile = services[i, "pidfile"]
 		if (pidfile == "") {
-			services[i, "status_command"] = sprintf("pgrep -x '%s' > /dev/null; echo $?", services[i, "process_name"])
+			services[i, "status_command"] = sprintf("pgrep -x '%s' >/dev/null; echo $?", services[i, "process_name"])
 		}
 		else {
-			services[i, "status_command"] = sprintf("pgrep -F /var/run/%s -x '%s' > /dev/null; echo $?", pidfile, services[i, "process_name"])
+			services[i, "status_command"] = sprintf("pgrep -F /var/run/%s -x '%s' >/dev/null 2>/dev/null; echo $?", pidfile, services[i, "process_name"])
 		}
 	}
 
