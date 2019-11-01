@@ -358,16 +358,21 @@ BEGIN {
 		}
 
 
-		split(exec_line("nc -U /var/run/dpinger_*.sock"), gateway_pinger_status_parts, " ")
-		gateway_latency_average = gateway_pinger_status_parts[2] / 1000
-		gateway_latency_stddev = gateway_pinger_status_parts[3] / 1000
-		gateway_ping_packet_loss = gateway_pinger_status_parts[4]
-		output = output sprintf( \
-			"\nGateway ping RTT : average %6.1f ms, stddev %6.1f ms, packet loss %3d %%",
-			gateway_latency_average,
-			gateway_latency_stddev,
-			gateway_ping_packet_loss \
-		)
+		split(exec_line("nc -U /var/run/dpinger_*.sock 2>/dev/null || :"), gateway_pinger_status_parts, " ")
+		if (length(gateway_pinger_status_parts) == 4) {
+			gateway_latency_average = gateway_pinger_status_parts[2] / 1000
+			gateway_latency_stddev = gateway_pinger_status_parts[3] / 1000
+			gateway_ping_packet_loss = gateway_pinger_status_parts[4]
+			output = output sprintf( \
+				"\nGateway ping RTT : average %6.1f ms, stddev %6.1f ms, packet loss %3d %%",
+				gateway_latency_average,
+				gateway_latency_stddev,
+				gateway_ping_packet_loss \
+			)
+		}
+		else {
+			output = output "\nGateway ping RTT : dpinger is not running"
+		}
 
 
 		output = output "\n"
