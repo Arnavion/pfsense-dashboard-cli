@@ -12,7 +12,7 @@ BEGIN {
 
 	services[1, "service_name"] = "dhcpd"; services[1, "process_name"] = "dhcpd"; services[1, "pidfile"] = ""
 	services[2, "service_name"] = "dnsbl"; services[2, "process_name"] = "lighttpd_pfb"; services[2, "pidfile"] = ""
-	services[3, "service_name"] = "dpinger"; services[3, "process_name"] = "dpinger"; services[3, "pidfile"] = "dpinger_WAN_DHCP~*.pid"
+	services[3, "service_name"] = "dpinger"; services[3, "process_name"] = "dpinger"; services[3, "pidfile"] = "dpinger_*.pid"
 	services[4, "service_name"] = "ntpd"; services[4, "process_name"] = "ntpd"; services[4, "pidfile"] = "ntpd.pid"
 	services[5, "service_name"] = "sshd"; services[5, "process_name"] = "sshd"; services[5, "pidfile"] = "sshd.pid"
 	services[6, "service_name"] = "syslogd"; services[6, "process_name"] = "syslogd"; services[6, "pidfile"] = "syslog.pid"
