@@ -95,14 +95,8 @@ BEGIN {
 		output = "\x1b[2J\x1b[1;1H\x1b[3J"
 
 
-		output = output exec_line(sprintf("date -jf '%%s' '%.0f' '+%%Y-%%m-%%d %%H:%%M:%%S'", now))
-
-
-		output = output "\n"
-
-
 		output = output sprintf( \
-			"\nVersion          : %s",
+			"Version          : %s",
 			os_version \
 		)
 		output = output sprintf( \
