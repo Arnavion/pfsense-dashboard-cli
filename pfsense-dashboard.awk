@@ -30,10 +30,9 @@ BEGIN {
 	os_release_date = read_line("/etc/version.buildtime")
 	os_base_version = exec_line("uname -sr")
 
-	split(exec_line("sysctl -n kern.boottime"), boot_time_parts, " ")
-	boot_time_secs = boot_time_parts[4]
-	boot_time_secs = substr(boot_time_secs, 0, length(boot_time_secs) - 1)
-	boot_time_usecs = boot_time_parts[7]
+	split(exec_line("sysctl -b kern.boottime | od -t uI"), boot_time_parts, " ")
+	boot_time_secs = (boot_time_parts[3] * 2 ^ 32) + boot_time_parts[2]
+	boot_time_usecs = (boot_time_parts[5] * 2 ^ 32) + boot_time_parts[4]
 	boot_time = boot_time_secs + boot_time_usecs / 1000000
 
 	physical_memory = exec_line("sysctl -n hw.physmem") + 0
@@ -41,7 +40,7 @@ BEGIN {
 	memory_max = exec_line("sysctl -n vm.stats.vm.v_page_count") + 0
 
 	command = "sysctl -aN | sort"
-	thermal_sensors_command = "sysctl -n"
+	thermal_sensors_command = "sysctl -b"
 	i = 1
 	while ((command | getline) > 0) {
 		if (index($0, "temperature") > 0) {
@@ -50,6 +49,7 @@ BEGIN {
 			i += 1
 		}
 	}
+	thermal_sensors_command = thermal_sensors_command " | hexdump -v -e '\"%u \"'"
 	close(command)
 
 	split(exec_line("sysctl -n kern.disks"), disk_names, " ")
@@ -250,11 +250,10 @@ BEGIN {
 
 		output = output sprintf("\nTemperatures     : ")
 		first = 1
-		exec_lines(thermal_sensors_command, thermal_sensors_values)
+		split(exec_line(thermal_sensors_command), thermal_sensors_values, " ")
 		for (i = 1; i <= length(thermal_sensors); i++) {
 			thermal_sensor_name = thermal_sensors[i]
-			thermal_sensor_value = thermal_sensors_values[i]
-			sub(/C$/, "", thermal_sensor_value)
+			thermal_sensor_value = thermal_sensors_values[i] / 10 - 273.15
 
 			if (first) {
 				first = 0
