@@ -57,19 +57,29 @@ BEGIN {
 	disk_usage_format = sprintf("%%%ds : %%5.1f %%%% of %%sB", max_mount_point_len)
 
 	max_disk_name_len = 0
+	max_disk_serial_number_len = 0
 	split(exec_line("sysctl -n kern.disks"), disk_names, " ")
 	for (i in disk_names) {
 		disk_name = disk_names[i]
 		disks[i, "name"] = disk_name
-		disks[i, "info_command"] = sprintf("diskinfo -v '/dev/%s'", disk_name)
+
+		split(exec_line_match(sprintf("smartctl -i '/dev/%s'", disk_name), "Serial Number: "), disk_serial_number_parts, " ")
+		disk_serial_number = disk_serial_number_parts[3]
+		disks[i, "serial_number"] = disk_serial_number
+
 		disks[i, "smart_status_command"] = sprintf("smartctl -H '/dev/%s'", disk_name)
 
 		disk_name_len = length(disk_name)
 		if (disk_name_len > max_disk_name_len) {
 			max_disk_name_len = disk_name_len
 		}
+
+		disk_serial_number_len = length(disk_serial_number)
+		if (disk_serial_number_len > max_disk_serial_number_len) {
+			max_disk_serial_number_len = disk_serial_number_len
+		}
 	}
-	disk_status_format = sprintf("%%%ds %%15s %%s", max_disk_name_len)
+	disk_status_format = sprintf("%%%ds %%%ds %%s", max_disk_name_len, max_disk_serial_number_len)
 
 	max_thermal_sensor_name_len = 0
 	command = "sysctl -aN | sort"
@@ -278,9 +288,7 @@ BEGIN {
 		output = output sprintf("\nSMART status     : ")
 		first = 1
 		for (i = 1; i <= length(disks) / 3; i++) {
-			split(exec_line_match(disks[i, "info_command"], "# Disk ident"), disk_ident_parts, " ")
-
-			split(exec_line_match(disks[i, "smart_status_command"], "SMART overall-health self-assessment test result"), disk_smart_status_parts, ":")
+			split(exec_line_match(disks[i, "smart_status_command"], "SMART overall-health self-assessment test result"), disk_smart_status_parts, ": ")
 
 			if (first) {
 				first = 0
@@ -292,7 +300,7 @@ BEGIN {
 			output = output sprintf( \
 				disk_status_format,
 				disks[i, "name"],
-				disk_ident_parts[1],
+				disks[i, "serial_number"],
 				disk_smart_status_parts[2] \
 			)
 		}
