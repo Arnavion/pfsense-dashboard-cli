@@ -288,7 +288,7 @@ BEGIN {
 		output = output sprintf("\nSMART status     : ")
 		first = 1
 		for (i = 1; i <= length(disks) / 3; i++) {
-			split(exec_line_match(disks[i, "smart_status_command"], "SMART overall-health self-assessment test result"), disk_smart_status_parts, ": ")
+			split(exec_line_match(disks[i, "smart_status_command"], "SMART overall-health self-assessment test result"), disk_smart_status_parts, " ")
 
 			if (first) {
 				first = 0
@@ -301,7 +301,7 @@ BEGIN {
 				disk_status_format,
 				disks[i, "name"],
 				disks[i, "serial_number"],
-				disk_smart_status_parts[2] \
+				disk_smart_status_parts[6] \
 			)
 		}
 
