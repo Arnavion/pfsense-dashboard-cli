@@ -60,6 +60,8 @@ The output refreshes every second.
 
 1. Edit the `interfaces` array at the top of `pfsense-dashboard.awk` to have the names of the network interfaces you want to monitor, including any bridge interfaces.
 
+   `interfaces[1]` is interpreted as the WAN interface to fetch firewall logs for.
+
 1. Edit the `services` array at the top of `pfsense-dashboard.awk` to have the names and process names of the services you want to monitor.
 
 1. Copy `pfsense-dashboard.awk` to your router.

@@ -71,6 +71,11 @@ BEGIN {
 		}
 	}
 
+	firewall_logs_command = sprintf( \
+		"clog /var/log/filter.log | grep '%s' | tail -10r",
+		interfaces[1] \
+	)
+
 
 	# Dynamic state
 
@@ -402,8 +407,7 @@ BEGIN {
 
 		output = output sprintf("\nFirewall logs    : ")
 		first = 1
-		command = "clog /var/log/filter.log | tail -10r"
-		while ((command | getline) > 0) {
+		while ((firewall_logs_command | getline) > 0) {
 			split($6, log_line_parts, ",")
 
 			if (first) {
@@ -414,7 +418,7 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				"%s %02s %s %s %-7s %-3s %4s %15s -> %s:%s",
+				"%s %02s %s %s %s %-3s %4s %15s -> %s:%s",
 				$1,
 				$2,
 				$3,
@@ -427,7 +431,7 @@ BEGIN {
 				log_line_parts[22] \
 			)
 		}
-		close(command)
+		close(firewall_logs_command)
 
 
 		printf("%s", output)
