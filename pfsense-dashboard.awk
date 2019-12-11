@@ -171,7 +171,7 @@ BEGIN {
 
 		split(exec_line_match("pfctl -s info", "current entries"), states_parts, " ")
 		states_used = states_parts[3] + 0
-		states_max = int(physical_memory / 10485760) * 100
+		states_max = int(physical_memory / 10485760) * 1000
 		states_used_percent = states_used * 100 / states_max
 		output = output sprintf( \
 			"\nState table size : %5.1f %% (%7d / %7d)",
