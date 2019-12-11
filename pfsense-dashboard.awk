@@ -39,6 +39,39 @@ BEGIN {
 	physical_memory_mib = physical_memory / 1048576
 	memory_max = exec_line("sysctl -n vm.stats.vm.v_page_count") + 0
 
+	command = "df -kt ufs"
+	max_mount_point_len = 0
+	current_line = 0
+	while ((command | getline) > 0) {
+		current_line += 1
+		if (current_line < 2) {
+			continue
+		}
+
+		mount_point_len = length($6)
+		if (mount_point_len > max_mount_point_len) {
+			max_mount_point_len = mount_point_len
+		}
+	}
+	close(command)
+	disk_usage_format = sprintf("%%%ds : %%6.2f %%%% of %%sB", max_mount_point_len)
+
+	max_disk_name_len = 0
+	split(exec_line("sysctl -n kern.disks"), disk_names, " ")
+	for (i in disk_names) {
+		disk_name = disk_names[i]
+		disks[i, "name"] = disk_name
+		disks[i, "info_command"] = sprintf("diskinfo -v '/dev/%s'", disk_name)
+		disks[i, "smart_status_command"] = sprintf("smartctl -H '/dev/%s'", disk_name)
+
+		disk_name_len = length(disk_name)
+		if (disk_name_len > max_disk_name_len) {
+			max_disk_name_len = disk_name_len
+		}
+	}
+	disk_status_format = sprintf("%%%ds %%15s %%s", max_disk_name_len)
+
+	max_thermal_sensor_name_len = 0
 	command = "sysctl -aN | sort"
 	thermal_sensors_command = "sysctl -b"
 	i = 1
@@ -46,20 +79,29 @@ BEGIN {
 		if (index($0, "temperature") > 0) {
 			thermal_sensors[i] = $0
 			thermal_sensors_command = sprintf("%s '%s'", thermal_sensors_command, $0)
+
+			thermal_sensor_name_len = length($0)
+			if (thermal_sensor_name_len > max_thermal_sensor_name_len) {
+				max_thermal_sensor_name_len = thermal_sensor_name_len
+			}
+
 			i += 1
 		}
 	}
 	thermal_sensors_command = thermal_sensors_command " | hexdump -v -e '\"%u \"'"
 	close(command)
+	thermal_sensor_format = sprintf("%%%ds : %%5.1f °C", max_thermal_sensor_name_len)
 
-	split(exec_line("sysctl -n kern.disks"), disk_names, " ")
-	for (i in disk_names) {
-		disk_name = disk_names[i]
-		disks[i, "name"] = disk_name
-		disks[i, "info_command"] = sprintf("diskinfo -v '/dev/%s'", disk_name)
-		disks[i, "smart_status_command"] = sprintf("smartctl -H '/dev/%s'", disk_name)
+	max_interface_name_len = 0
+	for (i in interfaces) {
+		interface_name_len = length(interfaces[i])
+		if (interface_name_len > max_interface_name_len) {
+			max_interface_name_len = interface_name_len
+		}
 	}
+	interface_status_format = sprintf("%%%ds: %%-10s %%-15s %%8sB/s down %%8sB/s up", max_interface_name_len)
 
+	max_service_name_len = 0
 	num_services = length(services) / 3
 	for (i = 1; i <= num_services; i++) {
 		pidfile = services[i, "pidfile"]
@@ -69,7 +111,13 @@ BEGIN {
 		else {
 			services[i, "status_command"] = sprintf("pgrep -F /var/run/%s -x '%s' >/dev/null 2>/dev/null; echo $?", pidfile, services[i, "process_name"])
 		}
+
+		service_name_len = length(services[i, "service_name"])
+		if (service_name_len > max_service_name_len) {
+			max_service_name_len = service_name_len
+		}
 	}
+	service_status_format = sprintf("%%%ds: %%s", max_service_name_len)
 
 	firewall_logs_command = sprintf( \
 		"clog /var/log/filter.log | grep '%s' | tail -10r",
@@ -218,7 +266,7 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				"%16s : %6.2f %% of %sB",
+				disk_usage_format,
 				mount_point,
 				filesystem_space_used_percent,
 				filesystem_space_max_human \
@@ -242,7 +290,7 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				"%10s %15s %s",
+				disk_status_format,
 				disks[i, "name"],
 				disk_ident_parts[1],
 				disk_smart_status_parts[2] \
@@ -268,7 +316,7 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				"%31s : %5.1f °C",
+				thermal_sensor_format,
 				thermal_sensor_name,
 				thermal_sensor_value \
 			)
@@ -343,7 +391,7 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				"%7s: %-10s %-15s %8sB/s down %8sB/s up",
+				interface_status_format,
 				interface_name,
 				interface_status,
 				interface_ip,
@@ -395,7 +443,7 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				"%7s: %s",
+				service_status_format,
 				services[i, "service_name"],
 				service_status \
 			)
