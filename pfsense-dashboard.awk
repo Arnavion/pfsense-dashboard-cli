@@ -54,7 +54,7 @@ BEGIN {
 		}
 	}
 	close(command)
-	disk_usage_format = sprintf("%%%ds : %%6.2f %%%% of %%sB", max_mount_point_len)
+	disk_usage_format = sprintf("%%%ds : %%5.1f %%%% of %%sB", max_mount_point_len)
 
 	max_disk_name_len = 0
 	split(exec_line("sysctl -n kern.disks"), disk_names, " ")
