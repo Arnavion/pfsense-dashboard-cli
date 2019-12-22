@@ -109,7 +109,7 @@ BEGIN {
 			max_interface_name_len = interface_name_len
 		}
 	}
-	interface_status_format = sprintf("%%%ds: %%-10s %%-15s %%8sB/s down %%8sB/s up", max_interface_name_len)
+	interface_status_format = sprintf("%%%ds: %%-10s %%-15s %%8sb/s down %%8sb/s up", max_interface_name_len)
 
 	max_service_name_len = 0
 	num_services = length(services) / 3
@@ -380,10 +380,10 @@ BEGIN {
 			close(command)
 
 			if (interface_status == "active" && interface_previous_in_bytes[i] > 0 && interface_previous_out_bytes[i] > 0) {
-				interface_in_speed = (interface_in_bytes - interface_previous_in_bytes[i]) / time_since_previous
+				interface_in_speed = (interface_in_bytes - interface_previous_in_bytes[i]) / time_since_previous * 8
 				interface_in_speed_human = human_size_base10(interface_in_speed)
 
-				interface_out_speed = (interface_out_bytes - interface_previous_out_bytes[i]) / time_since_previous
+				interface_out_speed = (interface_out_bytes - interface_previous_out_bytes[i]) / time_since_previous * 8
 				interface_out_speed_human = human_size_base10(interface_out_speed)
 			}
 			else {
