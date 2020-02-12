@@ -124,7 +124,8 @@ BEGIN {
 			max_interface_name_len = interface_name_len
 		}
 	}
-	interface_status_format = sprintf("%%%ds: %%-10s %%-15s %%8sb/s down %%8sb/s up", max_interface_name_len)
+	interface_status_format1 = sprintf("%%%ds: %%-10s %%-15s %%8sb/s down %%8sb/s up", max_interface_name_len)
+	interface_status_format2 = sprintf("\n                   %%%ds             %%-15s", max_interface_name_len)
 
 	max_service_name_len = 0
 	num_services = length(services) / 3
@@ -356,6 +357,7 @@ BEGIN {
 			interface_name = interfaces[i, "name"]
 
 			interface_ip = ""
+			num_interface_other_ips = 0
 			if (interface_name == lan_bridge_interface) {
 				interface_status = "active"
 			}
@@ -365,7 +367,17 @@ BEGIN {
 			command = interfaces[i, "ifconfig_command"]
 			while ((command | getline) > 0) {
 				if ($1 == "inet") {
-					interface_ip = $2
+					if (interface_ip == "") {
+						interface_ip = $2
+					}
+					else {
+						num_interface_other_ips += 1
+						interface_other_ips[num_interface_other_ips] = $2
+					}
+				}
+				else if ($1 == "inet6" && index($2, "fe80:") != 1) {
+					num_interface_other_ips += 1
+					interface_other_ips[num_interface_other_ips] = $2
 				}
 				else if ($1 == "status:") {
 					interface_status = $2
@@ -374,7 +386,7 @@ BEGIN {
 					}
 				}
 
-				if (interface_ip != "" && interface_status != "") {
+				if (interface_ip != "" && interface_ipv6 != "" && interface_status != "") {
 					break
 				}
 			}
@@ -415,13 +427,21 @@ BEGIN {
 			}
 
 			output = output sprintf( \
-				interface_status_format,
+				interface_status_format1,
 				interface_name,
 				interface_status,
 				interface_ip,
 				interface_in_speed_human,
 				interface_out_speed_human \
 			)
+
+			for (j = 1; j <= num_interface_other_ips; j++) {
+				output = output sprintf( \
+					interface_status_format2,
+					"",
+					interface_other_ips[j] \
+				)
+			}
 
 			interface_previous_in_bytes[i] = interface_in_bytes
 			interface_previous_out_bytes[i] = interface_out_bytes
