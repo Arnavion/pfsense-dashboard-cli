@@ -3,12 +3,12 @@
 BEGIN {
 	# Static constants
 
-	interfaces[1] = "em0"
-	interfaces[2] = "bridge0"
-	interfaces[3] = "igb0"
-	interfaces[4] = "igb1"
-	interfaces[5] = "igb2"
-	interfaces[6] = "igb3"
+	wan_interface = "em0"
+	lan_bridge_interface = "bridge0"
+	lan_interfaces[1] = "igb0"
+	lan_interfaces[2] = "igb1"
+	lan_interfaces[3] = "igb2"
+	lan_interfaces[4] = "igb3"
 
 	services[1, "service_name"] = "dhcpd"; services[1, "process_name"] = "dhcpd"; services[1, "pidfile"] = ""
 	services[2, "service_name"] = "dnsbl"; services[2, "process_name"] = "lighttpd_pfb"; services[2, "pidfile"] = ""
@@ -103,9 +103,23 @@ BEGIN {
 	close(command)
 	thermal_sensor_format = sprintf("%%%ds : %%5.1f °C", max_thermal_sensor_name_len)
 
+	interfaces[1, "name"] = wan_interface
+	interfaces[1, "ifconfig_command"] = sprintf("ifconfig '%s'", wan_interface)
+	interfaces[1, "netstat_command"] = sprintf("netstat -I '%s' -bin", wan_interface)
+	interfaces[2, "name"] = lan_bridge_interface
+	interfaces[2, "ifconfig_command"] = sprintf("ifconfig '%s'", lan_bridge_interface)
+	interfaces[2, "netstat_command"] = sprintf("netstat -I '%s' -bin", lan_bridge_interface)
+	for (i in lan_interfaces) {
+		interface_name = lan_interfaces[i]
+		interfaces[i + 2, "name"] = interface_name
+		interfaces[i + 2, "ifconfig_command"] = sprintf("ifconfig '%s'", interface_name)
+		interfaces[i + 2, "netstat_command"] = sprintf("netstat -I '%s' -bin", interface_name)
+	}
+	num_interfaces = length(interfaces) / 3
+
 	max_interface_name_len = 0
-	for (i in interfaces) {
-		interface_name_len = length(interfaces[i])
+	for (i = 1; i <= num_interfaces; i++) {
+		interface_name_len = length(interfaces[i, "name"])
 		if (interface_name_len > max_interface_name_len) {
 			max_interface_name_len = interface_name_len
 		}
@@ -133,7 +147,7 @@ BEGIN {
 
 	firewall_logs_command = sprintf( \
 		"clog /var/log/filter.log | grep '%s' | tail -10r",
-		interfaces[1] \
+		wan_interface \
 	)
 
 
@@ -142,7 +156,7 @@ BEGIN {
 	cpu_previous_total = 0
 	cpu_previous_idle = 0
 
-	for (i in interfaces) {
+	for (i = 1; i <= num_interfaces; i++) {
 		interface_previous_in_bytes[i] = 0
 		interface_previous_out_bytes[i] = 0
 	}
@@ -338,22 +352,22 @@ BEGIN {
 
 		output = output sprintf("\nInterfaces       : ")
 		first = 1
-		for (i = 1; i <= length(interfaces); i++) {
-			interface_name = interfaces[i]
+		for (i = 1; i <= num_interfaces; i++) {
+			interface_name = interfaces[i, "name"]
 
 			interface_ip = ""
-			if (interface_name == "bridge0") {
+			if (interface_name == lan_bridge_interface) {
 				interface_status = "active"
 			}
 			else {
 				interface_status = ""
 			}
-			command = sprintf("ifconfig '%s'", interface_name)
+			command = interfaces[i, "ifconfig_command"]
 			while ((command | getline) > 0) {
-				if (index($0, "inet ") > 0) {
+				if ($1 == "inet") {
 					interface_ip = $2
 				}
-				else if (index($0, "status:") > 0) {
+				else if ($1 == "status:") {
 					interface_status = $2
 					for (j = 3; j <= NF; j++) {
 						interface_status = sprintf("%s %s", interface_status, $j)
@@ -368,7 +382,7 @@ BEGIN {
 
 			interface_in_bytes = 0
 			interface_out_bytes = 0
-			command = sprintf("netstat -I '%s' -bin", interface_name)
+			command = interfaces[i, "netstat_command"]
 			current_line = 0
 			while ((command | getline) > 0) {
 				current_line += 1
