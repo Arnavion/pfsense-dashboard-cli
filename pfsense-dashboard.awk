@@ -80,6 +80,7 @@ BEGIN {
 		}
 	}
 	disk_status_format = sprintf("%%%ds %%%ds %%s", max_disk_name_len, max_disk_serial_number_len)
+	num_disks = length(disks) / 3
 
 	max_thermal_sensor_name_len = 0
 	command = "sysctl -aN | sort"
@@ -128,6 +129,7 @@ BEGIN {
 		}
 	}
 	service_status_format = sprintf("%%%ds: %%s", max_service_name_len)
+	num_services = length(services) / 4
 
 	firewall_logs_command = sprintf( \
 		"clog /var/log/filter.log | grep '%s' | tail -10r",
@@ -287,7 +289,7 @@ BEGIN {
 
 		output = output sprintf("\nSMART status     : ")
 		first = 1
-		for (i = 1; i <= length(disks) / 3; i++) {
+		for (i = 1; i <= num_disks; i++) {
 			split(exec_line_match(disks[i, "smart_status_command"], "SMART overall-health self-assessment test result"), disk_smart_status_parts, " ")
 
 			if (first) {
@@ -434,7 +436,7 @@ BEGIN {
 
 		output = output sprintf("\nServices         : ")
 		first = 1
-		for (i = 1; i <= length(services) / 4; i++) {
+		for (i = 1; i <= num_services; i++) {
 			process_running = exec_line(services[i, "status_command"])
 			if (process_running == "0") {
 				service_status = "running"
