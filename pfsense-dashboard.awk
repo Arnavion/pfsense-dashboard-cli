@@ -125,7 +125,7 @@ BEGIN {
 		}
 	}
 	interface_status_format1 = sprintf("%%%ds: %%-10s %%-15s %%8sb/s down %%8sb/s up", max_interface_name_len)
-	interface_status_format2 = sprintf("\n                   %%%ds             %%-15s", max_interface_name_len)
+	interface_status_format2 = sprintf("\n                   %%%ds             %%s", max_interface_name_len)
 
 	max_service_name_len = 0
 	num_services = length(services) / 3
