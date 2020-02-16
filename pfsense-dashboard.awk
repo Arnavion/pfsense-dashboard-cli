@@ -607,22 +607,3 @@ function human_size_base10(value) {
 	value /= 1000
 	return sprintf("%5.1f T", value)
 }
-
-function human_size_si(value) {
-	if (value < 1024) {
-		return sprintf("%4d     ", value)
-	}
-
-	value /= 1024
-	if (value < 1024) {
-		return sprintf("%6.1f Ki", value)
-	}
-
-	value /= 1024
-	if (value < 1024) {
-		return sprintf("%6.1f Mi", value)
-	}
-
-	value /= 1024
-	return sprintf("%6.1f Gi", value)
-}
