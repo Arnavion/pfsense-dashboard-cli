@@ -8,30 +8,33 @@ Version          : 2.4.4-RELEASE-p3 (amd64)
                    built on Wed May 15 18:53:44 EDT 2019
                    based on FreeBSD 11.2-RELEASE-p10
 
-Uptime           : 6 days 22:27:49
+Uptime           : 65 days 08:06:57
 
-CPU usage        :   2.8 %
-Memory usage     :   1.4 % of 32609 MiB
-State table size :   0.0 % (     97 /  326000)
-MBUF usage       :   2.1 % (  20756 / 1000000)
-Disk usage       :                / :   0.40 % of 241.7 GB
-                           /var/run :   2.76 % of   3.5 MB
-SMART status     :       ada0  S0Z4NEAC948908  PASSED
+CPU usage        :   5.6 %
+Memory usage     :   1.7 % of 32609 MiB
+State table size :   0.0 % (    128 / 3260000)
+MBUF usage       :   2.1 % (  21006 / 1000000)
+Disk usage       :    / :   0.4 % of 247.5 GB
+                   /tmp :   0.1 % of   1.0 GB
+                   /var :   2.6 % of   1.0 GB
+SMART status     : ada0 S0Z4NEAC948908 PASSED
 
-Temperatures     :           dev.cpu.0.temperature :  34.0 °C
-                             dev.cpu.1.temperature :  30.0 °C
-                             dev.cpu.2.temperature :  31.0 °C
+Temperatures     :           dev.cpu.0.temperature :  33.0 °C
+                             dev.cpu.1.temperature :  31.0 °C
+                             dev.cpu.2.temperature :  32.0 °C
                              dev.cpu.3.temperature :  29.0 °C
                    hw.acpi.thermal.tz0.temperature :  27.9 °C
                    hw.acpi.thermal.tz1.temperature :  29.9 °C
 
-Interfaces       :     em0: active     ***.***.***.***  438    B/s down  132    B/s up
-                   bridge0: active     192.168.1.1      111    B/s down    8.1 KB/s up
-                      igb0: no carrier                      ?  B/s down      ?  B/s up
-                      igb1: no carrier                      ?  B/s down      ?  B/s up
-                      igb2: active                      179    B/s down  205    B/s up
-                      igb3: active                      187    B/s down    2.9 KB/s up
-Gateway ping RTT : average   17.9 ms, stddev    1.9 ms, packet loss   0 %
+Interfaces       :     em0: active     ***.***.***.***    4.8 Kb/s down    3.4 Kb/s up
+                   bridge0: active     192.168.1.1       25.1 Kb/s down   99.5 Kb/s up
+                                       10.10.10.1
+                                       fd26:8f92:d8a5:1::1
+                      igb0: no carrier                      ?  b/s down      ?  b/s up
+                      igb1: no carrier                      ?  b/s down      ?  b/s up
+                      igb2: active                        7.8 Kb/s down    3.2 Kb/s up
+                      igb3: active                        3.2 Kb/s down   35.0 Kb/s up
+Gateway ping RTT : average   18.6 ms, stddev    1.3 ms, packet loss   0 %
 
 Services         :   dhcpd: running
                      dnsbl: running
@@ -41,16 +44,16 @@ Services         :   dhcpd: running
                    syslogd: running
                    unbound: running
 
-Firewall logs    : Oct 19 23:10:12 block em0 in udp  190.88.192.127 -> ***.***.***.***:9676
-                   Oct 19 23:10:11 block em0 in udp  190.88.192.127 -> ***.***.***.***:63251
-                   Oct 19 23:10:11 block em0 in udp  190.88.192.127 -> ***.***.***.***:9676
-                   Oct 19 23:10:09 block em0 in udp  49.189.181.124 -> ***.***.***.***:9676
-                   Oct 19 23:10:08 block em0 in udp  190.88.192.127 -> ***.***.***.***:63251
-                   Oct 19 23:10:07 block em0 in udp  98.218.179.181 -> ***.***.***.***:63251
-                   Oct 19 23:10:05 block em0 in udp   171.98.127.44 -> ***.***.***.***:9676
-                   Oct 19 23:10:04 block em0 in tcp   193.32.161.48 -> ***.***.***.***:8244
-                   Oct 19 23:10:01 block em0 in udp  190.88.192.127 -> ***.***.***.***:9676
-                   Oct 19 23:10:00 block em0 in tcp  185.234.219.58 -> ***.***.***.***:25
+Firewall logs    : Feb 16 01:03:51 block em0 in   udp  162.219.176.22 -> ***.***.***.***:23828
+                   Feb 16 01:03:39 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23181
+                   Feb 16 01:03:35 block em0 in   tcp  77.247.108.119 -> ***.***.***.***:5038
+                   Feb 16 01:03:23 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23181
+                   Feb 16 01:03:22 block em0 in   udp   37.110.94.133 -> ***.***.***.***:23828
+                   Feb 16 01:03:21 block em0 in   udp     142.55.3.15 -> ***.***.***.***:19671
+                   Feb 16 01:03:16 block em0 in   tcp 122.116.103.221 -> ***.***.***.***:23
+                   Feb 16 01:03:13 block em0 in   udp   92.255.228.66 -> ***.***.***.***:23828
+                   Feb 16 01:03:08 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23828
+                   Feb 16 01:03:05 block em0 in   tcp   92.63.194.148 -> ***.***.***.***:38509
 ```
 
 The output refreshes every second.
