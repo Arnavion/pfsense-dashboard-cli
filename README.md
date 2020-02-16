@@ -77,7 +77,7 @@ The output refreshes every second.
 	ssh root@router 'pfsense-dashboard.awk'
 	```
 
-The script requires `/usr/bin/awk` and `/usr/local/bin/perl` (`perl5`). `awk` is part of base, and `perl5` is pulled in by pfSense, so both are present on a default install.
+The script requires `/usr/bin/awk`, `/usr/local/bin/jq` (`jq`) and `/usr/local/bin/perl` (`perl5`). `awk` is part of base, and `perl5` is pulled in by pfSense, so both are present on a default install. `jq` needs to be installed with `pkg add`, though if you've installed third-party packages like pfBlockerNG then it may have already been pulled in as a dependency.
 
 You need to run the script as `root` if you want to have it show the firewall logs, since the firewall log file is owned by `root:wheel` by default. If you don't need the firewall logs, remove that part of the script, and run it as any limited user with shell access instead.
 

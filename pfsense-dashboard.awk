@@ -18,6 +18,26 @@ BEGIN {
 	services[6, "service_name"] = "syslogd"; services[6, "process_name"] = "syslogd"; services[6, "pidfile"] = "syslog.pid"
 	services[7, "service_name"] = "unbound"; services[7, "process_name"] = "unbound"; services[7, "pidfile"] = "unbound.pid"
 
+	netstat_command = " \
+		netstat -bin --libxo json | \
+		jq ' \
+			reduce .statistics.interface[] as { name: $name, network: $network, address: $address, \"received-bytes\": $in, \"sent-bytes\": $out } \
+			({}; .[$name] = { \
+				addresses: (.[$name].addresses + ( \
+					if ( \
+						($network | startswith(\"<Link\")) or \
+						($network | startswith(\"<Link\")) or \
+						($address | startswith(\"fe80:\")) \
+					) then [] else [$address] end \
+				)), \
+				in: (.[$name].in + $in), \
+				out: (.[$name].out + $out) \
+			}) | \
+			to_entries[] | \
+			\"\\(.key) \\(.value.in) \\(.value.out) \\(.value.addresses | join(\" \"))\" \
+		' -r \
+	"
+
 
 	# Dynamic constants
 
@@ -105,17 +125,14 @@ BEGIN {
 
 	interfaces[1, "name"] = wan_interface
 	interfaces[1, "ifconfig_command"] = sprintf("ifconfig '%s'", wan_interface)
-	interfaces[1, "netstat_command"] = sprintf("netstat -I '%s' -bin", wan_interface)
 	interfaces[2, "name"] = lan_bridge_interface
 	interfaces[2, "ifconfig_command"] = sprintf("ifconfig '%s'", lan_bridge_interface)
-	interfaces[2, "netstat_command"] = sprintf("netstat -I '%s' -bin", lan_bridge_interface)
 	for (i in lan_interfaces) {
 		interface_name = lan_interfaces[i]
 		interfaces[i + 2, "name"] = interface_name
 		interfaces[i + 2, "ifconfig_command"] = sprintf("ifconfig '%s'", interface_name)
-		interfaces[i + 2, "netstat_command"] = sprintf("netstat -I '%s' -bin", interface_name)
 	}
-	num_interfaces = length(interfaces) / 3
+	num_interfaces = length(interfaces) / 2
 
 	max_interface_name_len = 0
 	for (i = 1; i <= num_interfaces; i++) {
@@ -352,60 +369,52 @@ BEGIN {
 
 
 		output = output sprintf("\nInterfaces       : ")
+
+		command = netstat_command
+		while ((command | getline) > 0) {
+			netstat_output[$1] = $0
+		}
+		close(command)
+
 		first = 1
 		for (i = 1; i <= num_interfaces; i++) {
 			interface_name = interfaces[i, "name"]
 
-			interface_ip = ""
-			num_interface_other_ips = 0
 			if (interface_name == lan_bridge_interface) {
 				interface_status = "active"
 			}
 			else {
 				interface_status = ""
 			}
-			command = interfaces[i, "ifconfig_command"]
-			while ((command | getline) > 0) {
-				if ($1 == "inet") {
-					if (interface_ip == "") {
-						interface_ip = $2
-					}
-					else {
-						num_interface_other_ips += 1
-						interface_other_ips[num_interface_other_ips] = $2
-					}
+			interface_status_output = exec_line_match(interfaces[i, "ifconfig_command"], "status:")
+			if (interface_status_output != "") {
+				split(interface_status_output, interface_status_parts, " ")
+				interface_status_parts_length = length(interface_status_parts)
+				interface_status = interface_status_parts[2]
+				for (j = 3; j <= interface_status_parts_length; j++) {
+					interface_status = sprintf("%s %s", interface_status, interface_status_parts[j])
 				}
-				else if ($1 == "inet6" && index($2, "fe80:") != 1) {
+			}
+
+			interface_netstat_output = netstat_output[interfaces[i, "name"]]
+			split(interface_netstat_output, interface_netstat_info, " ")
+			interface_netstat_info_length = length(interface_netstat_info)
+
+			interface_in_bytes = interface_netstat_info[2]
+			interface_out_bytes = interface_netstat_info[3]
+
+			interface_ip = ""
+			num_interface_other_ips = 0
+			for (j = 4; j <= interface_netstat_info_length; j++) {
+				one_interface_ip = interface_netstat_info[j]
+				if (interface_ip == "" && length(one_interface_ip) <= 15) {
+					interface_ip = one_interface_ip
+				}
+				else {
 					num_interface_other_ips += 1
-					interface_other_ips[num_interface_other_ips] = $2
-				}
-				else if ($1 == "status:") {
-					interface_status = $2
-					for (j = 3; j <= NF; j++) {
-						interface_status = sprintf("%s %s", interface_status, $j)
-					}
-				}
-
-				if (interface_ip != "" && interface_ipv6 != "" && interface_status != "") {
-					break
+					interface_other_ips[num_interface_other_ips] = one_interface_ip
 				}
 			}
-			close(command)
-
-			interface_in_bytes = 0
-			interface_out_bytes = 0
-			command = interfaces[i, "netstat_command"]
-			current_line = 0
-			while ((command | getline) > 0) {
-				current_line += 1
-				if (current_line < 2) {
-					continue
-				}
-
-				interface_in_bytes += $(NF - 4)
-				interface_out_bytes += $(NF - 1)
-			}
-			close(command)
 
 			if (interface_status == "active" && interface_previous_in_bytes[i] > 0 && interface_previous_out_bytes[i] > 0) {
 				interface_in_speed = (interface_in_bytes - interface_previous_in_bytes[i]) / time_since_previous * 8
