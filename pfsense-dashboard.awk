@@ -160,8 +160,10 @@ BEGIN {
 			max_service_name_len = service_name_len
 		}
 	}
-	service_status_format = sprintf("%%%ds: %%s", max_service_name_len)
+	service_status_format = sprintf(" %%%ds: %%11s |", max_service_name_len)
 	num_services = length(services) / 4
+	num_services_per_row = int(80 / (max_service_name_len + 16))
+	num_services_rows = int((num_services + num_services_per_row - 1) / num_services_per_row)
 
 	firewall_logs_command = sprintf( \
 		"clog /var/log/filter.log | grep '%s' | tail -10r",
@@ -477,29 +479,32 @@ BEGIN {
 		output = output "\n"
 
 
-		output = output sprintf("\nServices         : ")
-		first = 1
-		for (i = 1; i <= num_services; i++) {
-			process_running = exec_line(services[i, "status_command"])
-			if (process_running == "0") {
-				service_status = "running"
-			}
-			else {
-				service_status = "not running"
-			}
+		output = output sprintf("\nServices         :")
+		for (i = 1; i <= num_services_rows; i++) {
+			for (j = 1; j <= num_services_per_row; j++) {
+				service_index = i + num_services_rows * (j - 1)
+				if (service_index > num_services) {
+					break
+				}
 
-			if (first) {
-				first = 0
-			}
-			else {
-				output = output sprintf("\n                   ")
-			}
+				process_running = exec_line(services[service_index, "status_command"])
+				if (process_running == "0") {
+					service_status = "running"
+				}
+				else {
+					service_status = "not running"
+				}
 
-			output = output sprintf( \
-				service_status_format,
-				services[i, "service_name"],
-				service_status \
-			)
+				if (i > 1 && j == 1) {
+					output = output sprintf("\n                 |")
+				}
+
+				output = output sprintf( \
+					service_status_format,
+					services[service_index, "service_name"],
+					service_status \
+				)
+			}
 		}
 
 

@@ -36,13 +36,9 @@ Interfaces       :     em0: active     ***.***.***.***    4.8 Kb/s down    3.4 K
                       igb3: active                        3.2 Kb/s down   35.0 Kb/s up
 Gateway ping RTT : average   18.6 ms, stddev    1.3 ms, packet loss   0 %
 
-Services         :   dhcpd: running
-                     dnsbl: running
-                   dpinger: running
-                      ntpd: running
-                      sshd: running
-                   syslogd: running
-                   unbound: running
+Services         :   dhcpd:     running |    ntpd:     running | unbound:     running |
+                 |   dnsbl:     running |    sshd:     running |
+                 | dpinger:     running | syslogd:     running |
 
 Firewall logs    : Feb 16 01:03:51 block em0 in   udp  162.219.176.22 -> ***.***.***.***:23828
                    Feb 16 01:03:39 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23181
