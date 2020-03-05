@@ -11,12 +11,14 @@ BEGIN {
 	lan_interfaces[4] = "igb3"
 
 	services[1, "service_name"] = "dhcpd"; services[1, "process_name"] = "dhcpd"; services[1, "pidfile"] = ""
-	services[2, "service_name"] = "dnsbl"; services[2, "process_name"] = "lighttpd_pfb"; services[2, "pidfile"] = ""
-	services[3, "service_name"] = "dpinger"; services[3, "process_name"] = "dpinger"; services[3, "pidfile"] = "dpinger_*.pid"
-	services[4, "service_name"] = "ntpd"; services[4, "process_name"] = "ntpd"; services[4, "pidfile"] = "ntpd.pid"
-	services[5, "service_name"] = "sshd"; services[5, "process_name"] = "sshd"; services[5, "pidfile"] = "sshd.pid"
-	services[6, "service_name"] = "syslogd"; services[6, "process_name"] = "syslogd"; services[6, "pidfile"] = "syslog.pid"
-	services[7, "service_name"] = "unbound"; services[7, "process_name"] = "unbound"; services[7, "pidfile"] = "unbound.pid"
+	services[2, "service_name"] = "dpinger"; services[2, "process_name"] = "dpinger"; services[2, "pidfile"] = "dpinger_*.pid"
+	services[3, "service_name"] = "ntpd"; services[3, "process_name"] = "ntpd"; services[3, "pidfile"] = "ntpd.pid"
+	services[4, "service_name"] = "pfb_dnsbl"; services[4, "process_name"] = "lighttpd_pfb"; services[4, "pidfile"] = ""
+	services[5, "service_name"] = "pfb_filter"; services[5, "process_name"] = "php_pfb"; services[5, "pidfile"] = ""
+	services[6, "service_name"] = "radvd"; services[6, "process_name"] = "radvd"; services[6, "pidfile"] = "radvd.pid"
+	services[7, "service_name"] = "sshd"; services[7, "process_name"] = "sshd"; services[7, "pidfile"] = "sshd.pid"
+	services[8, "service_name"] = "syslogd"; services[8, "process_name"] = "syslogd"; services[8, "pidfile"] = "syslog.pid"
+	services[9, "service_name"] = "unbound"; services[9, "process_name"] = "unbound"; services[9, "pidfile"] = "unbound.pid"
 
 	netstat_command = " \
 		netstat -bin --libxo json | \
