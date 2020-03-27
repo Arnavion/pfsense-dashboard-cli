@@ -85,11 +85,9 @@ BEGIN {
 		disk_name = disk_names[i]
 		disks[i, "name"] = disk_name
 
-		split(exec_line_match(sprintf("smartctl -i '/dev/%s'", disk_name), "Serial Number: "), disk_serial_number_parts, " ")
-		disk_serial_number = disk_serial_number_parts[3]
-		disks[i, "serial_number"] = disk_serial_number
+		disks[i, "serial_number"] = exec_line(sprintf("smartctl -ij '/dev/%s' | jq '.serial_number' -r", disk_name))
 
-		disks[i, "smart_status_command"] = sprintf("smartctl -H '/dev/%s'", disk_name)
+		disks[i, "smart_status_command"] = sprintf("smartctl -Hj '/dev/%s' | jq '.smart_status.passed'", disk_name)
 
 		disk_name_len = length(disk_name)
 		if (disk_name_len > max_disk_name_len) {
@@ -336,9 +334,15 @@ BEGIN {
 		output = output sprintf("\nSMART status     : ")
 		first = 1
 		for (i = 1; i <= num_disks; i++) {
-			split(exec_line_match(disks[i, "smart_status_command"], "SMART overall-health self-assessment test result"), disk_smart_status_parts, " ")
-			disk_smart_status = disk_smart_status_parts[6]
-			disk_smart_color = get_color_for_up_down(disk_smart_status == "PASSED")
+			disk_smart_passed = exec_line(disks[i, "smart_status_command"])
+			if (disk_smart_passed == "true") {
+				disk_smart_status = "PASSED"
+				disk_smart_color = get_color_for_up_down(1)
+			}
+			else {
+				disk_smart_status = "FAILED"
+				disk_smart_color = get_color_for_up_down(0)
+			}
 
 			if (first) {
 				first = 0
