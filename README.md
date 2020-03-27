@@ -36,9 +36,8 @@ Interfaces       :     em0: active     ***.***.***.***    4.8 Kb/s down    3.4 K
                       igb3: active                        3.2 Kb/s down   35.0 Kb/s up
 Gateway ping RTT : average   18.6 ms, stddev    1.3 ms, packet loss   0 %
 
-Services         :      dhcpd:     running |  pfb_dnsbl:     running |       sshd:     running |
-                 |    dpinger:     running | pfb_filter:     running |    syslogd:     running |
-                 |       ntpd:     running |      radvd:     running |    unbound:     running |
+Services         : dhcpd      | ntpd       | pfb_filter | sshd       | unbound    |
+                 | dpinger    | pfb_dnsbl  | radvd      | syslogd    |
 
 Firewall logs    : Feb 16 01:03:51 block em0 in   udp  162.219.176.22 -> ***.***.***.***:23828
                    Feb 16 01:03:39 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23181
@@ -52,7 +51,7 @@ Firewall logs    : Feb 16 01:03:51 block em0 in   udp  162.219.176.22 -> ***.***
                    Feb 16 01:03:05 block em0 in   tcp   92.63.194.148 -> ***.***.***.***:38509
 ```
 
-The output refreshes every second.
+The output refreshes every second. It also uses colors that are not visible here.
 
 
 # How to use

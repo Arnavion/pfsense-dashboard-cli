@@ -76,7 +76,7 @@ BEGIN {
 		}
 	}
 	close(command)
-	disk_usage_format = sprintf("%%%ds : %%5.1f %%%% of %%sB", max_mount_point_len)
+	disk_usage_format = sprintf("\x1B[%%sm%%%ds : %%5.1f %%%% of %%sB\x1B[0m", max_mount_point_len)
 
 	max_disk_name_len = 0
 	max_disk_serial_number_len = 0
@@ -101,7 +101,7 @@ BEGIN {
 			max_disk_serial_number_len = disk_serial_number_len
 		}
 	}
-	disk_status_format = sprintf("%%%ds %%%ds %%s", max_disk_name_len, max_disk_serial_number_len)
+	disk_status_format = sprintf("\x1B[%%sm%%%ds %%%ds %%s\x1B[0m", max_disk_name_len, max_disk_serial_number_len)
 	num_disks = length(disks) / 3
 
 	max_thermal_sensor_name_len = 0
@@ -123,7 +123,7 @@ BEGIN {
 	}
 	thermal_sensors_command = thermal_sensors_command " | hexdump -v -e '\"%u \"'"
 	close(command)
-	thermal_sensor_format = sprintf("%%%ds : %%5.1f °C", max_thermal_sensor_name_len)
+	thermal_sensor_format = sprintf("\x1B[%%sm%%%ds : %%5.1f °C\x1B[0m", max_thermal_sensor_name_len)
 
 	interfaces[1, "name"] = wan_interface
 	interfaces[1, "ifconfig_command"] = sprintf("ifconfig '%s'", wan_interface)
@@ -143,8 +143,8 @@ BEGIN {
 			max_interface_name_len = interface_name_len
 		}
 	}
-	interface_status_format1 = sprintf("%%%ds: %%-10s %%-15s %%8sb/s down %%8sb/s up", max_interface_name_len)
-	interface_status_format2 = sprintf("\n                   %%%ds             %%s", max_interface_name_len)
+	interface_status_format1 = sprintf("\x1B[%%sm%%%ds: %%-10s %%-15s %%8sb/s down %%8sb/s up\x1B[0m", max_interface_name_len)
+	interface_status_format2 = sprintf("\n\x1B[%%sm                   %%%ds             %%s\x1B[0m", max_interface_name_len)
 
 	max_service_name_len = 0
 	num_services = length(services) / 3
@@ -162,9 +162,9 @@ BEGIN {
 			max_service_name_len = service_name_len
 		}
 	}
-	service_status_format = sprintf(" %%%ds: %%11s |", max_service_name_len)
+	service_status_format = sprintf(" \x1B[%%sm%%-%ds\x1B[0m |", max_service_name_len)
 	num_services = length(services) / 4
-	num_services_per_row = int(80 / (max_service_name_len + 16))
+	num_services_per_row = int(80 / (max_service_name_len + 3))
 	num_services_rows = int((num_services + num_services_per_row - 1) / num_services_per_row)
 
 	firewall_logs_command = sprintf( \
@@ -193,7 +193,7 @@ BEGIN {
 		time_since_previous = now - previous
 
 
-		output = "\x1b[2J\x1b[1;1H\x1b[3J"
+		output = "\x1B[2J\x1B[1;1H\x1B[3J"
 
 
 		output = output sprintf( \
@@ -240,8 +240,10 @@ BEGIN {
 			cpu_total_diff = cpu_total - cpu_previous_total
 			cpu_total_idle = cpu_idle - cpu_previous_idle
 			cpu_percent = (cpu_total_diff - cpu_total_idle) * 100 / cpu_total_diff
+			cpu_usage_color = get_color_for_usage(cpu_percent)
 			output = output sprintf( \
-				"\nCPU usage        : %5.1f %%",
+				"\nCPU usage        : \x1B[%sm%5.1f %%\x1B[0m",
+				cpu_usage_color,
 				cpu_percent \
 			)
 		}
@@ -258,8 +260,10 @@ BEGIN {
 		memory_free = memory_info[3] + 0
 		memory_used = memory_max - memory_inactive - memory_cache - memory_free
 		memory_used_percent = memory_used * 100 / memory_max
+		memory_usage_color = get_color_for_usage(memory_used_percent)
 		output = output sprintf( \
-			"\nMemory usage     : %5.1f %% of %d MiB",
+			"\nMemory usage     : \x1B[%sm%5.1f %% of %d MiB\x1B[0m",
+			memory_usage_color,
 			memory_used_percent,
 			physical_memory_mib \
 		)
@@ -269,8 +273,10 @@ BEGIN {
 		states_used = states_parts[3] + 0
 		states_max = int(physical_memory / 10485760) * 1000
 		states_used_percent = states_used * 100 / states_max
+		states_usage_color = get_color_for_usage(states_used_percent)
 		output = output sprintf( \
-			"\nState table size : %5.1f %% (%7d / %7d)",
+			"\nState table size : \x1B[%sm%5.1f %% (%7d / %7d)\x1B[0m",
+			states_usage_color,
 			states_used_percent,
 			states_used,
 			states_max \
@@ -282,8 +288,10 @@ BEGIN {
 		mbufs_used = mbufs_parts_2[3] + 0
 		mbufs_max = mbufs_parts_2[4] + 0
 		mbufs_used_percent = mbufs_used * 100 / mbufs_max
+		mbufs_usage_color = get_color_for_usage(mbufs_used_percent)
 		output = output sprintf( \
-			"\nMBUF usage       : %5.1f %% (%7d / %7d)",
+			"\nMBUF usage       : \x1B[%sm%5.1f %% (%7d / %7d)\x1B[0m",
+			mbufs_usage_color,
 			mbufs_used_percent,
 			mbufs_used,
 			mbufs_max \
@@ -304,6 +312,7 @@ BEGIN {
 			filesystem_space_used = $3
 			filesystem_space_max = $2
 			filesystem_space_used_percent = filesystem_space_used * 100 / filesystem_space_max
+			filesystem_space_usage_color = get_color_for_usage(filesystem_space_used_percent)
 			filesystem_space_max_human = human_size_base10(filesystem_space_max * 1024)
 
 			if (first) {
@@ -315,6 +324,7 @@ BEGIN {
 
 			output = output sprintf( \
 				disk_usage_format,
+				filesystem_space_usage_color,
 				mount_point,
 				filesystem_space_used_percent,
 				filesystem_space_max_human \
@@ -327,6 +337,8 @@ BEGIN {
 		first = 1
 		for (i = 1; i <= num_disks; i++) {
 			split(exec_line_match(disks[i, "smart_status_command"], "SMART overall-health self-assessment test result"), disk_smart_status_parts, " ")
+			disk_smart_status = disk_smart_status_parts[6]
+			disk_smart_color = get_color_for_up_down(disk_smart_status == "PASSED")
 
 			if (first) {
 				first = 0
@@ -337,9 +349,10 @@ BEGIN {
 
 			output = output sprintf( \
 				disk_status_format,
+				disk_smart_color,
 				disks[i, "name"],
 				disks[i, "serial_number"],
-				disk_smart_status_parts[6] \
+				disk_smart_status \
 			)
 		}
 
@@ -353,6 +366,7 @@ BEGIN {
 		for (i = 1; i <= length(thermal_sensors); i++) {
 			thermal_sensor_name = thermal_sensors[i]
 			thermal_sensor_value = thermal_sensors_values[i] / 10 - 273.15
+			thermal_sensor_color = get_color_for_temperature(thermal_sensor_value)
 
 			if (first) {
 				first = 0
@@ -363,6 +377,7 @@ BEGIN {
 
 			output = output sprintf( \
 				thermal_sensor_format,
+				thermal_sensor_color,
 				thermal_sensor_name,
 				thermal_sensor_value \
 			)
@@ -439,8 +454,11 @@ BEGIN {
 				output = output sprintf("\n                   ")
 			}
 
+			interface_status_color = get_color_for_up_down(interface_status == "active")
+
 			output = output sprintf( \
 				interface_status_format1,
+				interface_status_color,
 				interface_name,
 				interface_status,
 				interface_ip,
@@ -451,6 +469,7 @@ BEGIN {
 			for (j = 1; j <= num_interface_other_ips; j++) {
 				output = output sprintf( \
 					interface_status_format2,
+					interface_status_color,
 					"",
 					interface_other_ips[j] \
 				)
@@ -491,10 +510,10 @@ BEGIN {
 
 				process_running = exec_line(services[service_index, "status_command"])
 				if (process_running == "0") {
-					service_status = "running"
+					service_color = get_color_for_up_down(1)
 				}
 				else {
-					service_status = "not running"
+					service_color = get_color_for_up_down(0)
 				}
 
 				if (i > 1 && j == 1) {
@@ -503,8 +522,8 @@ BEGIN {
 
 				output = output sprintf( \
 					service_status_format,
-					services[service_index, "service_name"],
-					service_status \
+					service_color,
+					services[service_index, "service_name"] \
 				)
 			}
 		}
@@ -613,4 +632,57 @@ function human_size_base10(value) {
 
 	value /= 1000
 	return sprintf("%5.1f T", value)
+}
+
+function get_color_for_usage(usage) {
+	if (usage < 5) {
+		return "0;34";
+	}
+	if (usage < 10) {
+		return "1;34";
+	}
+	if (usage < 25) {
+		return "1;32";
+	}
+	if (usage < 50) {
+		return "1;33";
+	}
+	if (usage < 75) {
+		return "0;33";
+	}
+	if (usage < 90) {
+		return "1;31";
+	}
+	return "0;31";
+}
+
+function get_color_for_temperature(temp) {
+	if (temp < 30) {
+		return "0;34";
+	}
+	if (temp < 35) {
+		return "1;34";
+	}
+	if (temp < 40) {
+		return "1;32";
+	}
+	if (temp < 45) {
+		return "1;33";
+	}
+	if (temp < 55) {
+		return "0;33";
+	}
+	if (temp < 65) {
+		return "1;31";
+	}
+	return "0;31";
+}
+
+function get_color_for_up_down(is_up) {
+	if (is_up) {
+		return "1;32";
+	}
+	else {
+		return "0;31";
+	}
 }
