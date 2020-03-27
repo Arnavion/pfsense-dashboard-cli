@@ -281,10 +281,9 @@ BEGIN {
 		)
 
 
-		split(exec_line_match("netstat -m", "mbuf clusters in use"), mbufs_parts, " ")
-		split(mbufs_parts[1], mbufs_parts_2, "/")
-		mbufs_used = mbufs_parts_2[3] + 0
-		mbufs_max = mbufs_parts_2[4] + 0
+		split(exec_line("netstat -m --libxo json | jq '.[\"mbuf-statistics\"] | \"\\(.[\"cluster-total\"]) \\(.[\"cluster-max\"])\"' -r"), mbufs_parts, " ")
+		mbufs_used = mbufs_parts[1] + 0
+		mbufs_max = mbufs_parts[2] + 0
 		mbufs_used_percent = mbufs_used * 100 / mbufs_max
 		mbufs_usage_color = get_color_for_usage(mbufs_used_percent)
 		output = output sprintf( \
