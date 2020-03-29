@@ -1,0 +1,72 @@
+ssh:
+  # The hostname (or IP) and SSH port of the router.
+  hostname: 'router:22'
+
+  # The username to use to ssh to the router.
+  #
+  # Note that you need to ssh as `root` if you want to have the program to show the firewall logs,
+  # since the firewall log file is owned by `root:wheel` by default. If you don't need the firewall logs,
+  # remove that part of the program, and change this to any limited user with shell access instead.
+  username: 'root'
+
+
+# Interfaces to monitor.
+interfaces:
+  # WAN interfaces. Firewall logs will be filtered to these interfaces.
+  wan:
+  - 'em0'
+  - 'gif0'
+
+  # LAN bridge interface.
+  lan_bridge: 'bridge0'
+
+  # Other LAN interfaces.
+  lan:
+  - 'igb0'
+  - 'igb1'
+  - 'igb2'
+  - 'igb3'
+
+
+# Gateways to monitor the dpinger statistics (ping RTT and packet loss) for.
+gateways:
+- 'WAN_DHCP'
+- 'WAN_HE_TUNNELV6'
+
+
+# Services to monitor.
+#
+# Each entry is a map of service name, process name, and optional pidfile to check.
+services:
+- name: 'dhcpd'
+  process: 'dhcpd'
+
+- name: 'dpinger'
+  process: 'dpinger'
+  pidfile: 'dpinger_*.pid'
+
+- name: 'ntpd'
+  process: 'ntpd'
+  pidfile: 'ntpd.pid'
+
+- name: 'pfb_dnsbl'
+  process: 'lighttpd_pfb'
+
+- name: 'pfb_filter'
+  process: 'php_pfb'
+
+- name: 'radvd'
+  process: 'radvd'
+  pidfile: 'radvd.pid'
+
+- name: 'sshd'
+  process: 'sshd'
+  pidfile: 'sshd.pid'
+
+- name: 'syslogd'
+  process: 'syslogd'
+  pidfile: 'syslog.pid'
+
+- name: 'unbound'
+  process: 'unbound'
+  pidfile: 'unbound.pid'

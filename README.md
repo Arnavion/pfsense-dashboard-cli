@@ -4,51 +4,54 @@ The pfSense status dashboard in your terminal instead of a web browser.
 # Example
 
 ```
-Version          : 2.4.4-RELEASE-p3 (amd64)
-                   built on Wed May 15 18:53:44 EDT 2019
-                   based on FreeBSD 11.2-RELEASE-p10
+Version          : 2.4.5-RELEASE.p0 (amd64)
+                   built on Tue Mar 24 15:25:50 EDT 2020
+                   based on FreeBSD 11.3-STABLE
 
-Uptime           : 65 days 08:06:57
+Uptime           : 3 days 00:53:03
 
-CPU usage        :   5.6 %
-Memory usage     :   1.7 % of 32609 MiB
-State table size :   0.0 % (    128 / 3260000)
-MBUF usage       :   2.1 % (  21006 / 1000000)
-Disk usage       :    / :   0.4 % of 247.5 GB
+CPU usage        :   4.9 %
+Memory usage     :   8.4 % of 32609 MiB
+State table size :   0.0 % (    211 / 3260000)
+MBUF usage       :   2.0 % (  20496 / 1000000)
+Disk usage       :    / :   0.5 % of 247.5 GB
                    /tmp :   0.1 % of   1.0 GB
                    /var :   2.6 % of   1.0 GB
 SMART status     : ada0 S0Z4NEAC948908 PASSED
 
-Temperatures     :           dev.cpu.0.temperature :  33.0 °C
+Temperatures     :           dev.cpu.0.temperature :  29.0 °C
                              dev.cpu.1.temperature :  31.0 °C
-                             dev.cpu.2.temperature :  32.0 °C
-                             dev.cpu.3.temperature :  29.0 °C
+                             dev.cpu.2.temperature :  29.0 °C
+                             dev.cpu.3.temperature :  26.0 °C
                    hw.acpi.thermal.tz0.temperature :  27.9 °C
                    hw.acpi.thermal.tz1.temperature :  29.9 °C
+                                              ada0 :  27.0 °C
 
-Interfaces       :     em0: active     ***.***.***.***    4.8 Kb/s down    3.4 Kb/s up
-                   bridge0: active     192.168.1.1       25.1 Kb/s down   99.5 Kb/s up
-                                       10.10.10.1
-                                       fd26:8f92:d8a5:1::1
-                      igb0: no carrier                      ?  b/s down      ?  b/s up
-                      igb1: no carrier                      ?  b/s down      ?  b/s up
-                      igb2: active                        7.8 Kb/s down    3.2 Kb/s up
-                      igb3: active                        3.2 Kb/s down   35.0 Kb/s up
-Gateway ping RTT : average   18.6 ms, stddev    1.3 ms, packet loss   0 %
+Interfaces       :     em0 :    1.3 Kb/s down    1.8 Kb/s up ***.***.***.***
+                      gif0 :    0    b/s down    0    b/s up ****:***:****:****::*
+                   bridge0 :                                 192.168.1.1
+                                                             ****:***:****:****::1
+                                                             10.10.10.1
+                      igb0 : no carrier
+                      igb1 : no carrier
+                      igb2 :   13.3 Kb/s down    5.1 Kb/s up
+                      igb3 :  141.5 Kb/s down  376.0 Kb/s up
+Gateways         :        WAN_DHCP : ping RTT   19.7 ms (   1.8 ms), packet loss   0 %
+                   WAN_HE_TUNNELV6 : ping RTT   19.7 ms (   0.5 ms), packet loss   0 %
 
 Services         : dhcpd      | ntpd       | pfb_filter | sshd       | unbound    |
                  | dpinger    | pfb_dnsbl  | radvd      | syslogd    |
 
-Firewall logs    : Feb 16 01:03:51 block em0 in   udp  162.219.176.22 -> ***.***.***.***:23828
-                   Feb 16 01:03:39 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23181
-                   Feb 16 01:03:35 block em0 in   tcp  77.247.108.119 -> ***.***.***.***:5038
-                   Feb 16 01:03:23 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23181
-                   Feb 16 01:03:22 block em0 in   udp   37.110.94.133 -> ***.***.***.***:23828
-                   Feb 16 01:03:21 block em0 in   udp     142.55.3.15 -> ***.***.***.***:19671
-                   Feb 16 01:03:16 block em0 in   tcp 122.116.103.221 -> ***.***.***.***:23
-                   Feb 16 01:03:13 block em0 in   udp   92.255.228.66 -> ***.***.***.***:23828
-                   Feb 16 01:03:08 block em0 in   udp   212.92.115.67 -> ***.***.***.***:23828
-                   Feb 16 01:03:05 block em0 in   tcp   92.63.194.148 -> ***.***.***.***:38509
+Firewall logs    : Mar 29 15:27:24 em0  block 26063/udp <- 186.79.169.243
+                   Mar 29 15:27:14 em0  block 20168/tcp <- 194.26.29.129
+                   Mar 29 15:27:08 em0  block  3399/tcp <- 50.227.144.229
+                   Mar 29 15:27:08 em0  block 14604/tcp <- 5.135.253.172
+                   Mar 29 15:26:58 em0  block 57275/tcp <- 92.118.37.74
+                   Mar 29 15:26:56 em0  block 24369/tcp <- 167.99.203.202
+                   Mar 29 15:26:43 em0  block 37731/tcp <- 185.176.27.174
+                   Mar 29 15:26:40 em0  block  2288/tcp <- 92.63.196.6
+                   Mar 29 15:26:38 em0  block  1243/tcp <- 80.82.78.20
+                   Mar 29 15:26:35 em0  block 24629/tcp <- 185.176.27.58
 ```
 
 The output refreshes every second. It also uses colors that are not visible here.
@@ -56,25 +59,27 @@ The output refreshes every second. It also uses colors that are not visible here
 
 # How to use
 
-1. Edit the `wan_interface` variable, `lan_bridge_interface` variable, and `lan_interfaces` array at the top of `pfsense-dashboard.awk` to have the names of the network interfaces you want to monitor, including any bridge interfaces.
+1. Copy config.toml.example to `~/.config/pfsense-dashboard/config.yaml` and edit it to match your router.
 
-1. Edit the `services` array at the top of `pfsense-dashboard.awk` to have the names and process names of the services you want to monitor.
+1. Build and install the binary under `$PATH`, such as in `~/bin`.
 
-1. Copy `pfsense-dashboard.awk` to your router.
+   ```sh
+   cargo build --release
+   cp -f ./target/release/pfsense-dashboard ~/bin/
+   ```
 
-	```sh
-	scp ./pfsense-dashboard.awk root@router:/usr/local/bin/
-	```
+1. Run `pfsense-dashboard`.
 
-1. Run `pfsense-dashboard.awk` over ssh.
+   ```sh
+   pfsense-dashboard
+   ```
 
-	```sh
-	ssh root@router 'pfsense-dashboard.awk'
-	```
+Note, the program assumes your router uses a little-endian x86_64 C ABI. If this is not the case, edit the constants in the "Router C ABI definitions" section at the top of `src/main.rs`.
 
-The script requires `/usr/bin/awk`, `/usr/local/bin/jq` (`jq`) and `/usr/local/bin/perl` (`perl5`). `awk` is part of base, and `perl5` is pulled in by pfSense, so both are present on a default install. `jq` needs to be installed with `pkg add`, though if you've installed third-party packages like pfBlockerNG then it may have already been pulled in as a dependency.
 
-You need to run the script as `root` if you want to have it show the firewall logs, since the firewall log file is owned by `root:wheel` by default. If you don't need the firewall logs, remove that part of the script, and run it as any limited user with shell access instead.
+# AWK version
+
+For the older `awk` script version of the dashboard that ran on the router, see <https://github.com/Arnavion/pfsense-dashboard-cli/tree/9ee00b89a20fd88aaede4d53d36100fbe68f1439>
 
 
 # License
