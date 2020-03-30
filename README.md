@@ -4,7 +4,7 @@ The pfSense status dashboard in your terminal instead of a web browser.
 # Example
 
 ```
-Version          : 2.4.5-RELEASE.p0 (amd64)
+Version          : 2.4.5-RELEASE (amd64)
                    built on Tue Mar 24 15:25:50 EDT 2020
                    based on FreeBSD 11.3-STABLE
 

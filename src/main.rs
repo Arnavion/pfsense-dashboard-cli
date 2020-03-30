@@ -69,7 +69,12 @@ fn main() -> Result<(), Error> {
 
 	{
 		let version_info::VersionInfo { version, version_patch, arch, os_release_date, os_base_version } = version_info::VersionInfo::get(&session)?;
-		writeln!(stdout, "Version          : {}.p{} ({})", version, version_patch, arch)?;
+		if version_patch == "0" {
+			writeln!(stdout, "Version          : {} ({})", version, arch)?;
+		}
+		else {
+			writeln!(stdout, "Version          : {}-p{} ({})", version, version_patch, arch)?;
+		}
 		writeln!(stdout, "                   built on {}", os_release_date)?;
 		writeln!(stdout, "                   based on {}", os_base_version)?;
 		writeln!(stdout)?;
