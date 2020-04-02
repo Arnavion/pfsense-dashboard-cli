@@ -91,13 +91,7 @@ fn log_reader_thread(logs: &std::sync::Mutex<Logs>, session: &ssh2::Session, wan
 
 			// Ref: https://docs.netgate.com/pfsense/en/latest/monitoring/filter-log-format-for-pfsense-2-2.html
 
-			let timestamp = {
-				let mut line_parts = line.split(' ');
-				let month = match line_parts.next() { Some(part) => part, None => continue };
-				let day = match line_parts.next() { Some(part) => part, None => continue };
-				let time = match line_parts.next() { Some(part) => part, None => continue };
-				format!("{} {:>2} {}", month, day, time)
-			};
+			let timestamp = match line.get(..("MMM dd HH:mm:ss".len())) { Some(part) => part, None => continue };
 
 			let mut line_parts = line.split(',');
 
@@ -189,7 +183,7 @@ fn log_reader_thread(logs: &std::sync::Mutex<Logs>, session: &ssh2::Session, wan
 
 			let mut logs = logs.lock().expect("could not lock firewall logs queue");
 			logs.push(Log {
-				timestamp,
+				timestamp: timestamp.to_owned(),
 				interface: interface.to_owned(),
 				action,
 				protocol,
