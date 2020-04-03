@@ -1,33 +1,30 @@
 #[derive(Debug)]
 pub(crate) struct Interfaces {
-	wan: std::collections::BTreeMap<String, Interface>,
-	lan_bridge: (String, Interface),
-	lan: std::collections::BTreeMap<String, Interface>,
+	gateways: std::collections::BTreeMap<String, Interface>,
+	bridges: std::collections::BTreeMap<String, Interface>,
+	other: std::collections::BTreeMap<String, Interface>,
 }
 
 impl Interfaces {
-	pub(crate) fn new(config: &crate::config::Config) -> Self {
+	pub(crate) fn new(gateways: impl IntoIterator<Item = String>, bridges: impl IntoIterator<Item = String>, other: impl IntoIterator<Item = String>) -> Self {
+		let make_pair = |name: String| { let interface = Interface::new(&name); (name, interface) };
 		Interfaces {
-			wan: config.interfaces.wan.iter().map(|name| (name.clone(), Interface::new(name))).collect(),
-			lan_bridge: (config.interfaces.lan_bridge.clone(), Interface::new(&config.interfaces.lan_bridge)),
-			lan: config.interfaces.lan.iter().map(|name| (name.clone(), Interface::new(name))).collect(),
+			gateways: gateways.into_iter().map(make_pair).collect(),
+			bridges: bridges.into_iter().map(make_pair).collect(),
+			other: other.into_iter().map(make_pair).collect(),
 		}
 	}
 
 	pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = (&'_ str, &'_ mut Interface, bool)> {
-		self.wan.iter_mut().map(|(name, interface)| (name.as_ref(), interface, false))
-		.chain(std::iter::once((self.lan_bridge.0.as_ref(), &mut self.lan_bridge.1, true)))
-		.chain(self.lan.iter_mut().map(|(name, interface)| (name.as_ref(), interface, false)))
+		self.gateways.iter_mut().map(|(name, interface)| (name.as_ref(), interface, false))
+		.chain(self.bridges.iter_mut().map(|(name, interface)| (name.as_ref(), interface, true)))
+		.chain(self.other.iter_mut().map(|(name, interface)| (name.as_ref(), interface, false)))
 	}
 
 	pub(crate) fn names(&self) -> impl Iterator<Item = &'_ str> {
-		self.wan.keys().map(AsRef::as_ref)
-		.chain(std::iter::once(self.lan_bridge.0.as_ref()))
-		.chain(self.lan.keys().map(AsRef::as_ref))
-	}
-
-	pub(crate) fn wan_names(&self) -> impl Iterator<Item = &'_ str> {
-		self.wan.keys().map(AsRef::as_ref)
+		self.gateways.keys().map(AsRef::as_ref)
+		.chain(self.bridges.keys().map(AsRef::as_ref))
+		.chain(self.other.keys().map(AsRef::as_ref))
 	}
 
 	pub(crate) fn update(&mut self, session: &ssh2::Session) -> Result<(), crate::Error> {
@@ -48,14 +45,17 @@ impl Interfaces {
 		for interface_statistics in interface_statistics {
 			let interface_name = interface_statistics.name;
 			let interface =
-				if let Some(interface) = self.wan.get_mut(&interface_name) {
+				if let Some(interface) = self.gateways.get_mut(&interface_name) {
 					Some(interface)
 				}
-				else if interface_name == self.lan_bridge.0 {
-					Some(&mut self.lan_bridge.1)
+				else if let Some(interface) = self.bridges.get_mut(&interface_name) {
+					Some(interface)
+				}
+				else if let Some(interface) = self.other.get_mut(&interface_name) {
+					Some(interface)
 				}
 				else {
-					self.lan.get_mut(&interface_name)
+					None
 				};
 
 			if let Some(interface) = interface {

@@ -1,8 +1,6 @@
 #[derive(serde_derive::Deserialize)]
 pub(crate) struct Config {
 	pub(crate) ssh: Ssh,
-	pub(crate) interfaces: Interfaces,
-	pub(crate) gateways: Vec<String>,
 	#[serde(default)]
 	pub(crate) services: Vec<Service>,
 }
@@ -22,13 +20,6 @@ impl Config {
 pub(crate) struct Ssh {
 	pub(crate) hostname: String,
 	pub(crate) username: String,
-}
-
-#[derive(serde_derive::Deserialize)]
-pub(crate) struct Interfaces {
-	pub(crate) wan: Vec<String>,
-	pub(crate) lan_bridge: String,
-	pub(crate) lan: Vec<String>,
 }
 
 #[derive(serde_derive::Deserialize)]

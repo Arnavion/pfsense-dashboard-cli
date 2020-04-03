@@ -10,30 +10,6 @@ ssh:
   username: 'root'
 
 
-# Interfaces to monitor.
-interfaces:
-  # WAN interfaces. Firewall logs will be filtered to these interfaces.
-  wan:
-  - 'em0'
-  - 'gif0'
-
-  # LAN bridge interface.
-  lan_bridge: 'bridge0'
-
-  # Other LAN interfaces.
-  lan:
-  - 'igb0'
-  - 'igb1'
-  - 'igb2'
-  - 'igb3'
-
-
-# Gateways to monitor the dpinger statistics (ping RTT and packet loss) for.
-gateways:
-- 'WAN_DHCP'
-- 'WAN_HE_TUNNELV6'
-
-
 # Services to monitor.
 #
 # Each entry is a map of service name, process name, and optional pidfile to check.

@@ -4,8 +4,8 @@ pub(crate) struct Gateways {
 }
 
 impl Gateways {
-	pub(crate) fn new(config: &crate::config::Config) -> Self {
-		let gateways = config.gateways.iter().map(|gateway| (gateway.clone(), None)).collect();
+	pub(crate) fn new(gateways: impl IntoIterator<Item = String>) -> Self {
+		let gateways = gateways.into_iter().map(|gateway| (gateway, None)).collect();
 		Gateways {
 			gateways,
 		}

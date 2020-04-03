@@ -15,21 +15,21 @@ pub(crate) struct Log {
 }
 
 impl Logs {
-	pub(crate) fn new(config: &crate::config::Config) -> Result<std::sync::Arc<std::sync::Mutex<Self>>, crate::Error> {
+	pub(crate) fn new(interfaces: impl IntoIterator<Item = String>, ssh: &crate::config::Ssh) -> Result<std::sync::Arc<std::sync::Mutex<Self>>, crate::Error> {
 		let result = std::sync::Arc::new(std::sync::Mutex::new(Logs {
 			inner: Default::default(),
 			head: 0,
 		}));
 
-		let wan_interfaces = config.interfaces.wan.clone();
-
 		// Can't multiplex on the same session because ssh2 has internal mutexes to only let one command run at a time.
 		// So create a new connection and session.
-		let session = crate::connect(&config.ssh.hostname, &config.ssh.username)?;
+		let session = crate::connect(&ssh.hostname, &ssh.username)?;
 
 		let logs = result.clone();
 
-		let _ = std::thread::spawn(move || if let Err(err) = log_reader_thread(&logs, &session, &wan_interfaces) {
+		let interfaces = interfaces.into_iter().collect();
+
+		let _ = std::thread::spawn(move || if let Err(err) = log_reader_thread(&logs, &session, &interfaces) {
 			eprintln!("{:?}", err);
 			std::process::abort();
 		});
@@ -82,7 +82,7 @@ impl std::str::FromStr for Action {
 	}
 }
 
-fn log_reader_thread(logs: &std::sync::Mutex<Logs>, session: &ssh2::Session, wan_interfaces: &[String]) -> Result<(), crate::Error> {
+fn log_reader_thread(logs: &std::sync::Mutex<Logs>, session: &ssh2::Session, interfaces: &std::collections::BTreeSet<String>) -> Result<(), crate::Error> {
 	loop {
 		let lines = crate::ssh_exec::clog_filter_log::run(session);
 
@@ -96,7 +96,7 @@ fn log_reader_thread(logs: &std::sync::Mutex<Logs>, session: &ssh2::Session, wan
 			let mut line_parts = line.split(',');
 
 			let interface = match line_parts.nth(4) { Some(part) => part, None => continue };
-			if !wan_interfaces.iter().any(|wan_interface| wan_interface == interface) {
+			if !interfaces.contains(interface) {
 				continue;
 			}
 

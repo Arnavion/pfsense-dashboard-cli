@@ -12,6 +12,7 @@
 )]
 
 mod config;
+mod pfconfig;
 mod ssh_exec;
 
 mod boot_time;
@@ -65,6 +66,9 @@ fn main() -> Result<(), Error> {
 	let session = connect(&config.ssh.hostname, &config.ssh.username)?;
 
 
+	let pfconfig = pfconfig::PfConfig::load(&session)?;
+
+
 	stdout.write_all(b"\x1B[2J\x1B[1;1H\x1B[3J")?;
 
 	{
@@ -101,11 +105,10 @@ fn main() -> Result<(), Error> {
 		.chain(disks.iter().map(|disk::Disk { name, .. }| name))
 		.map(String::len).max().unwrap_or_default();
 
-	let mut interfaces = interface::Interfaces::new(&config);
+	let mut interfaces = interface::Interfaces::new(pfconfig.gateway_interfaces.iter().cloned(), pfconfig.bridge_interfaces, pfconfig.other_interfaces);
 	let max_interface_name_len = interfaces.names().map(str::len).max().unwrap_or_default();
-	let max_wan_interface_name_len = interfaces.wan_names().map(str::len).max().unwrap_or_default();
 
-	let mut gateways = gateway::Gateways::new(&config);
+	let mut gateways = gateway::Gateways::new(pfconfig.gateways);
 	let max_gateway_name_len = gateways.iter().map(|(name, _)| name.len()).max().unwrap_or_default();
 
 	let mut services = service::Service::get_all(config.services.iter());
@@ -113,7 +116,8 @@ fn main() -> Result<(), Error> {
 	let num_services_per_row = 70 / (max_service_name_len + 3);
 	let num_services_rows = (services.len() + num_services_per_row - 1) / num_services_per_row;
 
-	let firewall_logs = firewall_logs::Logs::new(&config)?;
+	let max_firewall_log_interface_name_len = pfconfig.gateway_interfaces.iter().map(String::len).max().unwrap_or_default();
+	let firewall_logs = firewall_logs::Logs::new(pfconfig.gateway_interfaces, &config.ssh)?;
 
 
 	let mut previous = std::time::SystemTime::now();
@@ -155,7 +159,7 @@ fn main() -> Result<(), Error> {
 		// - The number of mounted filesystems changes. This is only an issue if you mount or unmount a filesystem dynamically.
 		//   Restart the dashboard when you do that.
 		//
-		// - The number of IPs assigned to the WAN or LAN bridge interfaces. This should only happen if you change your interface settings.
+		// - The number of IPs assigned to any gateway or bridge interfaces. This should only happen if you change your interface settings.
 		//   Restart the dashboard when you do that.
 
 		output.extend_from_slice(b"\x1B[5;1H");
@@ -299,7 +303,7 @@ fn main() -> Result<(), Error> {
 		{
 			output.extend_from_slice(b"\n\x1B[KInterfaces       : ");
 
-			for (i, (interface_name, interface, is_lan_bridge)) in interfaces.iter_mut().enumerate() {
+			for (i, (interface_name, interface, is_bridge)) in interfaces.iter_mut().enumerate() {
 				if i > 0 {
 					output.extend_from_slice(b"\n\x1B[K                   ");
 				}
@@ -347,8 +351,8 @@ fn main() -> Result<(), Error> {
 								max_interface_name_len = max_interface_name_len,
 							)?;
 						}
-						else if is_lan_bridge {
-							// LAN bridge bandwidth is double-counted, and isn't particularly useful anyway, so don't print it.
+						else if is_bridge {
+							// Bridge bandwidth is double-counted, and isn't particularly useful anyway, so don't print it.
 
 							write!(
 								output,
@@ -459,37 +463,37 @@ fn main() -> Result<(), Error> {
 				match firewall_log.protocol {
 					firewall_logs::Protocol::Icmp { source, destination: _ } => write!(
 						output,
-						"\x1B[{}m{} {:max_wan_interface_name_len$} {}      icmp <- {}\x1B[0m",
+						"\x1B[{}m{} {:max_firewall_log_interface_name_len$} {}      icmp <- {}\x1B[0m",
 						firewall_log_color,
 						firewall_log.timestamp,
 						firewall_log.interface,
 						firewall_log.action,
 						source,
-						max_wan_interface_name_len = max_wan_interface_name_len,
+						max_firewall_log_interface_name_len = max_firewall_log_interface_name_len,
 					)?,
 
 					firewall_logs::Protocol::Tcp { source, destination } => write!(
 						output,
-						"\x1B[{}m{} {:max_wan_interface_name_len$} {} {:5}/tcp <- {}\x1B[0m",
+						"\x1B[{}m{} {:max_firewall_log_interface_name_len$} {} {:5}/tcp <- {}\x1B[0m",
 						firewall_log_color,
 						firewall_log.timestamp,
 						firewall_log.interface,
 						firewall_log.action,
 						destination.port(),
 						source.ip(),
-						max_wan_interface_name_len = max_wan_interface_name_len,
+						max_firewall_log_interface_name_len = max_firewall_log_interface_name_len,
 					)?,
 
 					firewall_logs::Protocol::Udp { source, destination } => write!(
 						output,
-						"\x1B[{}m{} {:max_wan_interface_name_len$} {} {:5}/udp <- {}\x1B[0m",
+						"\x1B[{}m{} {:max_firewall_log_interface_name_len$} {} {:5}/udp <- {}\x1B[0m",
 						firewall_log_color,
 						firewall_log.timestamp,
 						firewall_log.interface,
 						firewall_log.action,
 						destination.port(),
 						source.ip(),
-						max_wan_interface_name_len = max_wan_interface_name_len,
+						max_firewall_log_interface_name_len = max_firewall_log_interface_name_len,
 					)?,
 				};
 			}
