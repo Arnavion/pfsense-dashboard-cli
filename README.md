@@ -59,7 +59,7 @@ The output refreshes every second. It also uses colors that are not visible here
 
 # How to use
 
-1. Copy config.toml.example to `~/.config/pfsense-dashboard/config.yaml` and edit it to match your router.
+1. Copy config.yaml.example to `~/.config/pfsense-dashboard/config.yaml` and edit it to match your router.
 
 1. Build and install the binary under `$PATH`, such as in `~/bin`.
 
