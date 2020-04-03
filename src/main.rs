@@ -113,7 +113,7 @@ fn main() -> Result<(), Error> {
 
 	let mut services = service::Service::get_all(config.services.iter());
 	let max_service_name_len = services.iter().map(|service::Service { name, .. }| name.len()).max().unwrap_or_default();
-	let num_services_per_row = 70 / (max_service_name_len + 3);
+	let num_services_per_row = 70 / (max_service_name_len + 2);
 	let num_services_rows = (services.len() + num_services_per_row - 1) / num_services_per_row;
 
 	let max_firewall_log_interface_name_len = pfconfig.gateway_interfaces.iter().map(String::len).max().unwrap_or_default();
@@ -428,12 +428,12 @@ fn main() -> Result<(), Error> {
 					let service_color = get_color_for_up_down(service.is_running);
 
 					if i > 0 && j == 0 {
-						output.extend_from_slice(b"\n\x1B[K                 |");
+						output.extend_from_slice(b"\n\x1B[K                  ");
 					}
 
 					write!(
 						output,
-						" \x1B[{}m{:max_service_name_len$}\x1B[0m |",
+						" \x1B[{}m{:max_service_name_len$}\x1B[0m ",
 						service_color,
 						service.name,
 						max_service_name_len = max_service_name_len,
