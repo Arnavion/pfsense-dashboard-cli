@@ -81,6 +81,9 @@ fn main() -> Result<(), Error> {
 	}
 
 
+	let mut output = vec![];
+
+
 	let mut cpu = cpu::Cpu::new();
 
 	let (boot_time, mut memory) = ssh_exec::batched_sysctls_1::run(&session)?;
@@ -155,14 +158,14 @@ fn main() -> Result<(), Error> {
 		// - The number of IPs assigned to the WAN or LAN bridge interfaces. This should only happen if you change your interface settings.
 		//   Restart the dashboard when you do that.
 
-		stdout.write_all(b"\x1B[5;1H")?;
+		output.extend_from_slice(b"\x1B[5;1H");
 
 
 		{
 			let uptime = now.duration_since(boot_time.0)?;
 			let uptime = uptime.as_secs();
 			write!(
-				stdout,
+				output,
 				"\x1B[KUptime           : {} days {:02}:{:02}:{:02}",
 				uptime / (24 * 60 * 60),
 				(uptime % (24 * 60 * 60)) / (60 * 60),
@@ -172,23 +175,23 @@ fn main() -> Result<(), Error> {
 		}
 
 
-		stdout.write_all(b"\n\x1B[K")?;
+		output.extend_from_slice(b"\n\x1B[K");
 
 
 		{
 			if let Some(cpu_usage_percent) = cpu.usage_percent() {
 				let cpu_usage_color = get_color_for_usage(cpu_usage_percent);
-				write!(stdout, "\n\x1B[KCPU usage        : \x1B[{}m{:5.1} %\x1B[0m", cpu_usage_color, cpu_usage_percent)?;
+				write!(output, "\n\x1B[KCPU usage        : \x1B[{}m{:5.1} %\x1B[0m", cpu_usage_color, cpu_usage_percent)?;
 			}
 			else {
-				stdout.write_all(b"\n\x1B[KCPU usage        :     ? %")?;
+				output.extend_from_slice(b"\n\x1B[KCPU usage        :     ? %");
 			}
 		}
 
 
 		{
 			let (memory_usage_percent, memory_usage_color) = usage(memory.used_pages as f32, memory.num_pages as f32);
-			write!(stdout, "\n\x1B[KMemory usage     : \x1B[{}m{:5.1} % of {} MiB\x1B[0m", memory_usage_color, memory_usage_percent, memory.physical / 1_048_576)?;
+			write!(output, "\n\x1B[KMemory usage     : \x1B[{}m{:5.1} % of {} MiB\x1B[0m", memory_usage_color, memory_usage_percent, memory.physical / 1_048_576)?;
 		}
 
 
@@ -196,19 +199,19 @@ fn main() -> Result<(), Error> {
 			let states_used = ssh_exec::pfctl_s_info::get_states_used(&session)?;
 			let states_max = (memory.physical / 10_485_760) * 1000;
 			let (states_usage_percent, states_usage_color) = usage(states_used as f32, states_max as f32);
-			write!(stdout, "\n\x1B[KState table size : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", states_usage_color, states_usage_percent, states_used, states_max)?;
+			write!(output, "\n\x1B[KState table size : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", states_usage_color, states_usage_percent, states_used, states_max)?;
 		}
 
 
 		{
 			let ssh_exec::netstat_m::MBufStatistics { cluster_total: mbufs_used, cluster_max: mbufs_max } = ssh_exec::netstat_m::get_mbuf_statistics(&session)?;
 			let (mbufs_usage_percent, mbufs_usage_color) = usage(mbufs_used as f32, mbufs_max as f32);
-			write!(stdout, "\n\x1B[KMBUF usage       : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", mbufs_usage_color, mbufs_usage_percent, mbufs_used, mbufs_max)?;
+			write!(output, "\n\x1B[KMBUF usage       : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", mbufs_usage_color, mbufs_usage_percent, mbufs_used, mbufs_max)?;
 		}
 
 
 		{
-			stdout.write_all(b"\n\x1B[KDisk usage       : ")?;
+			output.extend_from_slice(b"\n\x1B[KDisk usage       : ");
 			let filesystems = ssh_exec::df::get_filesystems(&session)?;
 			let max_mount_point_len = filesystems.iter().map(|filesystem| filesystem.mounted_on.len()).max().unwrap_or_default();
 			for (i, filesystem) in filesystems.into_iter().enumerate() {
@@ -216,10 +219,10 @@ fn main() -> Result<(), Error> {
 				let filesystem_space_max = filesystem.total_blocks;
 				let (filesystem_space_usage_percent, filesystem_space_usage_color) = usage(filesystem_space_used as f32, filesystem_space_max as f32);
 				if i > 0 {
-					stdout.write_all(b"\n\x1B[K                   ")?;
+					output.extend_from_slice(b"\n\x1B[K                   ");
 				}
 
-				write!(stdout,
+				write!(output,
 					"\x1B[{}m{:>max_mount_point_len$} : {:5.1} % of {}B\x1B[0m",
 					filesystem_space_usage_color,
 					filesystem.mounted_on,
@@ -232,17 +235,17 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			stdout.write_all(b"\n\x1B[KSMART status     : ")?;
+			output.extend_from_slice(b"\n\x1B[KSMART status     : ");
 			for (i, disk::Disk { name, serial_number, smart_passed, .. }) in disks.iter().enumerate() {
 				let disk_status_color = get_color_for_up_down(*smart_passed);
 				let disk_smart_status = if *smart_passed { "PASSED" } else { "FAILED" };
 
 				if i > 0 {
-					stdout.write_all(b"\n\x1B[K                   ")?;
+					output.extend_from_slice(b"\n\x1B[K                   ");
 				}
 
 				write!(
-					stdout,
+					output,
 					"\x1B[{}m{:>max_disk_name_len$} {:max_disk_serial_number_len$} {}\x1B[0m",
 					disk_status_color,
 					name,
@@ -255,11 +258,11 @@ fn main() -> Result<(), Error> {
 		}
 
 
-		stdout.write_all(b"\n\x1B[K")?;
+		output.extend_from_slice(b"\n\x1B[K");
 
 
 		{
-			stdout.write_all(b"\n\x1B[KTemperatures     : ")?;
+			output.extend_from_slice(b"\n\x1B[KTemperatures     : ");
 
 			let thermal_sensors =
 				temperature_sysctls.iter().map(|temperature_sysctl::TemperatureSysctl { name, value }| {
@@ -275,11 +278,11 @@ fn main() -> Result<(), Error> {
 				let thermal_sensor_color = get_color_for_temperature(thermal_sensor_value);
 
 				if i > 0 {
-					stdout.write_all(b"\n\x1B[K                   ")?;
+					output.extend_from_slice(b"\n\x1B[K                   ");
 				}
 
 				write!(
-					stdout,
+					output,
 					"\x1B[{}m{:>max_thermal_sensor_name_len$} : {:5.1} \u{00B0}C\x1B[0m",
 					thermal_sensor_color,
 					thermal_sensor_name,
@@ -290,22 +293,22 @@ fn main() -> Result<(), Error> {
 		}
 
 
-		stdout.write_all(b"\n\x1B[K")?;
+		output.extend_from_slice(b"\n\x1B[K");
 
 
 		{
-			stdout.write_all(b"\n\x1B[KInterfaces       : ")?;
+			output.extend_from_slice(b"\n\x1B[KInterfaces       : ");
 
 			for (i, (interface_name, interface, is_lan_bridge)) in interfaces.iter_mut().enumerate() {
 				if i > 0 {
-					stdout.write_all(b"\n\x1B[K                   ")?;
+					output.extend_from_slice(b"\n\x1B[K                   ");
 				}
 
 				if let Some(interface_error) = &interface.error {
 					let interface_status_color = get_color_for_up_down(false);
 
 					write!(
-						stdout,
+						output,
 						"\x1B[{}m{:>max_interface_name_len$} : {}\x1B[0m",
 						interface_status_color,
 						interface_name,
@@ -336,7 +339,7 @@ fn main() -> Result<(), Error> {
 					for (i, address) in interface.addresses.iter().enumerate() {
 						if i > 0 {
 							write!(
-								stdout,
+								output,
 								"\n\x1B[K                   \x1B[{}m{:>max_interface_name_len$}                                   {}\x1B[0m",
 								interface_status_color,
 								"",
@@ -348,7 +351,7 @@ fn main() -> Result<(), Error> {
 							// LAN bridge bandwidth is double-counted, and isn't particularly useful anyway, so don't print it.
 
 							write!(
-								stdout,
+								output,
 								"\x1B[{}m{:>max_interface_name_len$} :                                 {}\x1B[0m",
 								interface_status_color,
 								interface_name,
@@ -358,7 +361,7 @@ fn main() -> Result<(), Error> {
 						}
 						else {
 							write!(
-								stdout,
+								output,
 								"\x1B[{}m{:>max_interface_name_len$} : {:>8}b/s down {:>8}b/s up {}\x1B[0m",
 								interface_status_color,
 								interface_name,
@@ -375,16 +378,16 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			stdout.write_all(b"\n\x1B[KGateways         : ")?;
+			output.extend_from_slice(b"\n\x1B[KGateways         : ");
 
 			for (i, (name, gateway)) in gateways.iter().enumerate() {
 				if i > 0 {
-					stdout.write_all(b"\n\x1B[K                   ")?;
+					output.extend_from_slice(b"\n\x1B[K                   ");
 				}
 
 				match gateway {
 					Some(gateway::Gateway { latency_average, latency_stddev, ping_packet_loss }) => write!(
-						stdout,
+						output,
 						"{:>max_gateway_name_len$} : ping RTT {:6.1} ms ({:6.1} ms), packet loss {:3} %",
 						name,
 						latency_average.as_secs_f32() * 1000.,
@@ -394,7 +397,7 @@ fn main() -> Result<(), Error> {
 					)?,
 
 					None => write!(
-						stdout,
+						output,
 						"{:>max_gateway_name_len$} : dpinger is not running",
 						name,
 						max_gateway_name_len = max_gateway_name_len,
@@ -404,11 +407,11 @@ fn main() -> Result<(), Error> {
 		}
 
 
-		stdout.write_all(b"\n\x1B[K")?;
+		output.extend_from_slice(b"\n\x1B[K");
 
 
 		{
-			stdout.write_all(b"\n\x1B[KServices         :")?;
+			output.extend_from_slice(b"\n\x1B[KServices         :");
 
 			for i in 0..num_services_rows {
 				for j in 0..num_services_per_row {
@@ -421,11 +424,11 @@ fn main() -> Result<(), Error> {
 					let service_color = get_color_for_up_down(service.is_running);
 
 					if i > 0 && j == 0 {
-						stdout.write_all(b"\n\x1B[K                 |")?;
+						output.extend_from_slice(b"\n\x1B[K                 |");
 					}
 
 					write!(
-						stdout,
+						output,
 						" \x1B[{}m{:max_service_name_len$}\x1B[0m |",
 						service_color,
 						service.name,
@@ -436,16 +439,16 @@ fn main() -> Result<(), Error> {
 		}
 
 
-		stdout.write_all(b"\n\x1B[K")?;
+		output.extend_from_slice(b"\n\x1B[K");
 
 
 		{
-			stdout.write_all(b"\n\x1B[KFirewall logs    : ")?;
+			output.extend_from_slice(b"\n\x1B[KFirewall logs    : ");
 
 			let firewall_logs = firewall_logs.lock().expect("could not lock firewall logs queue");
 			for (i, firewall_log) in firewall_logs.iter().enumerate() {
 				if i > 0 {
-					stdout.write_all(b"\n\x1B[K                   ")?;
+					output.extend_from_slice(b"\n\x1B[K                   ");
 				}
 
 				let firewall_log_color = get_color_for_up_down(match firewall_log.action {
@@ -455,7 +458,7 @@ fn main() -> Result<(), Error> {
 
 				match firewall_log.protocol {
 					firewall_logs::Protocol::Icmp { source, destination: _ } => write!(
-						stdout,
+						output,
 						"\x1B[{}m{} {:max_wan_interface_name_len$} {}      icmp <- {}\x1B[0m",
 						firewall_log_color,
 						firewall_log.timestamp,
@@ -466,7 +469,7 @@ fn main() -> Result<(), Error> {
 					)?,
 
 					firewall_logs::Protocol::Tcp { source, destination } => write!(
-						stdout,
+						output,
 						"\x1B[{}m{} {:max_wan_interface_name_len$} {} {:5}/tcp <- {}\x1B[0m",
 						firewall_log_color,
 						firewall_log.timestamp,
@@ -478,7 +481,7 @@ fn main() -> Result<(), Error> {
 					)?,
 
 					firewall_logs::Protocol::Udp { source, destination } => write!(
-						stdout,
+						output,
 						"\x1B[{}m{} {:max_wan_interface_name_len$} {} {:5}/udp <- {}\x1B[0m",
 						firewall_log_color,
 						firewall_log.timestamp,
@@ -493,7 +496,9 @@ fn main() -> Result<(), Error> {
 		}
 
 
+		stdout.write_all(&output)?;
 		stdout.flush()?;
+		output.clear();
 
 
 		previous = now;
