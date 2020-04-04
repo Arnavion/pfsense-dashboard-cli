@@ -68,6 +68,8 @@ The output refreshes every second. It also uses colors that are not visible here
    cp -f ./target/release/pfsense-dashboard ~/bin/
    ```
 
+   `make install` will do this for you.
+
 1. Run `pfsense-dashboard`.
 
    ```sh
