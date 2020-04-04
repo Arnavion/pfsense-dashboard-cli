@@ -29,9 +29,9 @@ Temperatures     :           dev.cpu.0.temperature :  29.0 °C
 
 Interfaces       :     em0 :    1.3 Kb/s down    1.8 Kb/s up ***.***.***.***
                       gif0 :    0    b/s down    0    b/s up ****:***:****:****::*
-                   bridge0 :                                 192.168.1.1
-                                                             ****:***:****:****::1
+                   bridge0 :                                 ****:***:****:****::1
                                                              10.10.10.1
+                                                             192.168.1.1
                       igb0 : no carrier
                       igb1 : no carrier
                       igb2 :   13.3 Kb/s down    5.1 Kb/s up

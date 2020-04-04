@@ -60,7 +60,8 @@ impl Interfaces {
 
 			if let Some(interface) = interface {
 				if !interface_statistics.network.starts_with("<Link#") && !interface_statistics.address.starts_with("fe80:") {
-					interface.addresses.push(interface_statistics.address);
+					let address = interface_statistics.address.parse()?;
+					let _ = interface.addresses.insert(InterfaceAddressOrdered(address));
 				}
 
 				if interface_statistics.network.starts_with("<Link#") {
@@ -80,7 +81,7 @@ pub(crate) struct Interface {
 
 	pub(crate) error: Option<String>,
 
-	pub(crate) addresses: Vec<String>,
+	addresses: std::collections::BTreeSet<InterfaceAddressOrdered>,
 
 	received_bytes_previous: u64,
 	received_bytes: u64,
@@ -98,7 +99,7 @@ impl Interface {
 
 			error: None,
 
-			addresses: vec![],
+			addresses: Default::default(),
 
 			received_bytes_previous: 0,
 			received_bytes: 0,
@@ -106,6 +107,10 @@ impl Interface {
 			sent_bytes_previous: 0,
 			sent_bytes: 0,
 		}
+	}
+
+	pub(crate) fn addresses(&self) -> impl Iterator<Item = std::net::IpAddr> + '_ {
+		self.addresses.iter().map(|address| address.0)
 	}
 
 	pub(crate) fn speed(&self, time_since_previous: std::time::Duration) -> Option<(f32, f32)> {
@@ -116,6 +121,26 @@ impl Interface {
 		}
 		else {
 			None
+		}
+	}
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct InterfaceAddressOrdered(std::net::IpAddr);
+
+impl std::cmp::PartialOrd for InterfaceAddressOrdered {
+	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
+impl std::cmp::Ord for InterfaceAddressOrdered {
+	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+		match (self.0, other.0) {
+			(std::net::IpAddr::V6(_), std::net::IpAddr::V4(_)) => std::cmp::Ordering::Less,
+			(std::net::IpAddr::V4(_), std::net::IpAddr::V6(_)) => std::cmp::Ordering::Greater,
+			(std::net::IpAddr::V6(addr1), std::net::IpAddr::V6(addr2)) => addr1.cmp(&addr2),
+			(std::net::IpAddr::V4(addr1), std::net::IpAddr::V4(addr2)) => addr1.cmp(&addr2),
 		}
 	}
 }

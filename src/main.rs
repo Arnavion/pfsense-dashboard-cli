@@ -323,10 +323,6 @@ fn main() -> Result<(), Error> {
 				else {
 					let interface_status_color = get_color_for_up_down(true);
 
-					if interface.addresses.is_empty() {
-						interface.addresses.push(String::new());
-					}
-
 					let (interface_received_speed_human, interface_sent_speed_human): (std::borrow::Cow<'static, str>, std::borrow::Cow<'static, str>) =
 						match interface.speed(time_since_previous) {
 							Some((interface_received_speed, interface_sent_speed)) => (
@@ -340,7 +336,13 @@ fn main() -> Result<(), Error> {
 							),
 						};
 
-					for (i, address) in interface.addresses.iter().enumerate() {
+					for (i, address) in interface.addresses().map(Some).chain(std::iter::once(None)).enumerate() {
+						let address = match (address, i) {
+							(Some(address), _) => address.to_string(),
+							(None, 0) => String::new(),
+							(None, _) => break,
+						};
+
 						if i > 0 {
 							write!(
 								output,
