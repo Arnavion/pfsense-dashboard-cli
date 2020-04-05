@@ -111,7 +111,7 @@ fn main() -> Result<(), Error> {
 	let mut gateways = gateway::Gateways::new(pfconfig.gateways);
 	let max_gateway_name_len = gateways.iter().map(|(name, _)| name.len()).max().unwrap_or_default();
 
-	let mut services = service::Service::get_all(config.services.iter());
+	let mut services = service::Service::get_all(config.builtin_services, pfconfig.services)?;
 	let max_service_name_len = services.iter().map(|service::Service { name, .. }| name.len()).max().unwrap_or_default();
 	let num_services_per_row = 70 / (max_service_name_len + 2);
 	let num_services_rows = (services.len() + num_services_per_row - 1) / num_services_per_row;

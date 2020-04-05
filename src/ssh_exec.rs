@@ -234,13 +234,13 @@ pub(crate) mod pgrep {
 	}
 
 	impl Exec {
-		pub(crate) fn new(process: &str, pidfile: Option<&str>) -> Self {
+		pub(crate) fn new(executable: &str, pidfile: Option<&str>) -> Self {
 			let command =
 				if let Some(pidfile) = pidfile {
-					format!("/bin/pgrep -F /var/run/{} -x '{}' >/dev/null 2>/dev/null; echo $?", pidfile, process)
+					format!("/bin/pgrep -F /var/run/{} -x '{}' >/dev/null 2>/dev/null; echo $?", pidfile, executable)
 				}
 				else {
-					format!("/bin/pgrep -x '{}' >/dev/null 2>/dev/null; echo $?", process)
+					format!("/bin/pgrep -x '{}' >/dev/null 2>/dev/null; echo $?", executable)
 				};
 			Exec {
 				command,

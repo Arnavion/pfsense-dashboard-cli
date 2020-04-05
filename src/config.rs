@@ -2,7 +2,7 @@
 pub(crate) struct Config {
 	pub(crate) ssh: Ssh,
 	#[serde(default)]
-	pub(crate) services: Vec<Service>,
+	pub(crate) builtin_services: Vec<String>,
 }
 
 impl Config {
@@ -20,11 +20,4 @@ impl Config {
 pub(crate) struct Ssh {
 	pub(crate) hostname: String,
 	pub(crate) username: String,
-}
-
-#[derive(serde_derive::Deserialize)]
-pub(crate) struct Service {
-	pub(crate) name: String,
-	pub(crate) process: String,
-	pub(crate) pidfile: Option<String>,
 }

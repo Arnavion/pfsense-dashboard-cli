@@ -4,6 +4,13 @@ pub(crate) struct PfConfig {
 	pub(crate) bridge_interfaces: Vec<String>,
 	pub(crate) other_interfaces: Vec<String>,
 	pub(crate) gateways: Vec<String>,
+	pub(crate) services: Vec<Service>,
+}
+
+#[derive(Debug)]
+pub(crate) struct Service {
+	pub(crate) name: String,
+	pub(crate) executable: String,
 }
 
 impl PfConfig {
@@ -38,11 +45,20 @@ impl PfConfig {
 
 		let other_interfaces = interfaces.into_iter().map(ToOwned::to_owned).collect();
 
+		let services =
+			pfconfig.installed_packages.0.into_iter()
+			.map(|(name, executable)| Service {
+				name: name.to_owned(),
+				executable: executable.to_owned(),
+			})
+			.collect();
+
 		let result = PfConfig {
 			gateway_interfaces,
 			bridge_interfaces,
 			other_interfaces,
 			gateways,
+			services,
 		};
 
 		Ok(result)
@@ -54,6 +70,7 @@ struct PfSense<'input> {
 	bridges: Bridges<'input>,
 	interfaces: Interfaces<'input>,
 	gateways: Gateways<'input>,
+	installed_packages: InstalledPackages<'input>,
 }
 
 impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for PfSense<'input> {
@@ -63,10 +80,12 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for PfSense<
 		let bridges_tag_name: roxmltree::ExpandedName<'_> = "bridges".into();
 		let interfaces_tag_name: roxmltree::ExpandedName<'_> = "interfaces".into();
 		let gateways_tag_name: roxmltree::ExpandedName<'_> = "gateways".into();
+		let installed_packages_tag_name: roxmltree::ExpandedName<'_> = "installedpackages".into();
 
 		let mut bridges = None;
 		let mut interfaces = None;
 		let mut gateways = None;
+		let mut installed_packages = None;
 
 		for child in node.children() {
 			let child_tag_name = child.tag_name();
@@ -79,16 +98,21 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for PfSense<
 			else if child_tag_name == gateways_tag_name {
 				gateways = Some(std::convert::TryInto::try_into(child)?);
 			}
+			else if child_tag_name == installed_packages_tag_name {
+				installed_packages = Some(std::convert::TryInto::try_into(child)?);
+			}
 		}
 
 		let bridges = bridges.ok_or("bridges not found in config.xml")?;
 		let interfaces = interfaces.ok_or("interfaces not found in config.xml")?;
 		let gateways = gateways.ok_or("gateways not found in config.xml")?;
+		let installed_packages = installed_packages.ok_or("installed packages not found in config.xml")?;
 
 		Ok(PfSense {
 			bridges,
 			interfaces,
 			gateways,
+			installed_packages,
 		})
 	}
 }
@@ -244,6 +268,61 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Gateway<
 		Ok(Gateway {
 			interface,
 			name,
+		})
+	}
+}
+
+#[derive(Debug)]
+struct InstalledPackages<'input>(Vec<(&'input str, &'input str)>);
+
+impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for InstalledPackages<'input> {
+	type Error = crate::Error;
+
+	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
+		let service_tag_name: roxmltree::ExpandedName<'_> = "service".into();
+
+		let inner: Result<_, crate::Error> =
+			node.children()
+			.filter_map(|child|
+				if child.tag_name() == service_tag_name {
+					let InstalledPackageService { name, executable } = match std::convert::TryInto::try_into(child) {
+						Ok(installed_package_service) => installed_package_service,
+						Err(err) => return Some(Err(err)),
+					};
+					Some(Ok((name, executable)))
+				}
+				else {
+					None
+				})
+			.collect();
+		let inner = inner?;
+
+		Ok(InstalledPackages(inner))
+	}
+}
+
+#[derive(Debug)]
+struct InstalledPackageService<'input> {
+	name: &'input str,
+	executable: &'input str,
+}
+
+impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for InstalledPackageService<'input> {
+	type Error = crate::Error;
+
+	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
+		let name_tag_name: roxmltree::ExpandedName<'_> = "name".into();
+		let executable_tag_name: roxmltree::ExpandedName<'_> = "executable".into();
+
+		let name = node.children().find(|node| node.tag_name() == name_tag_name).ok_or("installedpackages.service.name not found in config.xml")?;
+		let name = name.text().ok_or("installedpackages.service.name is not a text node")?;
+
+		let executable = node.children().find(|node| node.tag_name() == executable_tag_name).ok_or("installedpackages.service.executable not found in config.xml")?;
+		let executable = executable.text().ok_or("installedpackages.service.executable is not a text node")?;
+
+		Ok(InstalledPackageService {
+			name,
+			executable,
 		})
 	}
 }

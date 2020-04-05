@@ -10,39 +10,13 @@ ssh:
   username: 'root'
 
 
-# Services to monitor.
+# Built-in services to monitor.
 #
-# Each entry is a map of service name, process name, and optional pidfile to check.
-services:
-- name: 'dhcpd'
-  process: 'dhcpd'
-
-- name: 'dpinger'
-  process: 'dpinger'
-  pidfile: 'dpinger_*.pid'
-
-- name: 'ntpd'
-  process: 'ntpd'
-  pidfile: 'ntpd.pid'
-
-- name: 'pfb_dnsbl'
-  process: 'lighttpd_pfb'
-
-- name: 'pfb_filter'
-  process: 'php_pfb'
-
-- name: 'radvd'
-  process: 'radvd'
-  pidfile: 'radvd.pid'
-
-- name: 'sshd'
-  process: 'sshd'
-  pidfile: 'sshd.pid'
-
-- name: 'syslogd'
-  process: 'syslogd'
-  pidfile: 'syslog.pid'
-
-- name: 'unbound'
-  process: 'unbound'
-  pidfile: 'unbound.pid'
+# Services from installed packages will be automatically detected and should not be listed here.
+builtin_services:
+- 'dhcpd'
+- 'ntpd'
+- 'radvd'
+- 'sshd'
+- 'syslogd'
+- 'unbound'

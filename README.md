@@ -39,8 +39,8 @@ Interfaces       :     em0 :   1.3 Kb/s down   1.8 Kb/s up ***.***.***.***
 Gateways         :        WAN_DHCP : ping RTT   19.7 ms (   1.8 ms), packet loss   0 %
                    WAN_HE_TUNNELV6 : ping RTT   19.7 ms (   0.5 ms), packet loss   0 %
 
-Services         : dhcpd       ntpd        pfb_filter  sshd        unbound
-                   dpinger     pfb_dnsbl   radvd       syslogd
+Services         : dhcpd       pfb_dnsbl   radvd       syslogd
+                   ntpd        pfb_filter  sshd        unbound
 
 Firewall logs    : Mar 29 15:27:24 em0  block 26063/udp <- 186.79.169.243
                    Mar 29 15:27:14 em0  block 20168/tcp <- 194.26.29.129
