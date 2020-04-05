@@ -323,60 +323,40 @@ fn main() -> Result<(), Error> {
 				else {
 					let interface_status_color = get_color_for_up_down(true);
 
-					let (interface_received_speed_human, interface_sent_speed_human): (std::borrow::Cow<'static, str>, std::borrow::Cow<'static, str>) =
+					write!(
+						output,
+						"\x1B[{}m{:>max_interface_name_len$} : ",
+						interface_status_color,
+						interface_name,
+						max_interface_name_len = max_interface_name_len,
+					)?;
+
+					if is_bridge {
+						// Bridge bandwidth is double-counted, and isn't particularly useful anyway, so don't print it.
+						output.extend_from_slice(b"                              ");
+					}
+					else {
 						match interface.speed(time_since_previous) {
-							Some((interface_received_speed, interface_sent_speed)) => (
-								HumanSizeBase10(interface_received_speed).to_string().into(),
-								HumanSizeBase10(interface_sent_speed).to_string().into(),
-							),
+							Some((interface_received_speed, interface_sent_speed)) =>
+								write!(output, "{}b/s down {}b/s up ", HumanSizeBase10(interface_received_speed), HumanSizeBase10(interface_sent_speed))?,
 
-							None => (
-								"?  ".into(),
-								"?  ".into(),
-							),
-						};
+							None =>
+								output.extend_from_slice(b"    ?  b/s down     ?  b/s up "),
+						}
+					}
 
-					for (i, address) in interface.addresses().map(Some).chain(std::iter::once(None)).enumerate() {
-						let address = match (address, i) {
-							(Some(address), _) => address.to_string(),
-							(None, 0) => String::new(),
-							(None, _) => break,
-						};
-
+					for (i, address) in interface.addresses().enumerate() {
 						if i > 0 {
 							write!(
 								output,
-								"\n\x1B[K                   \x1B[{}m{:>max_interface_name_len$}                                   {}\x1B[0m",
+								"\n\x1B[K                   \x1B[{}m{:>max_interface_name_len$}                                 ",
 								interface_status_color,
 								"",
-								address,
 								max_interface_name_len = max_interface_name_len,
 							)?;
 						}
-						else if is_bridge {
-							// Bridge bandwidth is double-counted, and isn't particularly useful anyway, so don't print it.
 
-							write!(
-								output,
-								"\x1B[{}m{:>max_interface_name_len$} :                                 {}\x1B[0m",
-								interface_status_color,
-								interface_name,
-								address,
-								max_interface_name_len = max_interface_name_len,
-							)?;
-						}
-						else {
-							write!(
-								output,
-								"\x1B[{}m{:>max_interface_name_len$} : {:>8}b/s down {:>8}b/s up {}\x1B[0m",
-								interface_status_color,
-								interface_name,
-								interface_received_speed_human,
-								interface_sent_speed_human,
-								address,
-								max_interface_name_len = max_interface_name_len,
-							)?;
-						}
+						write!(output, "{}\x1B[0m", address)?;
 					}
 				}
 			}
