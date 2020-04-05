@@ -65,7 +65,7 @@ impl std::fmt::Display for Action {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Action::Block => f.write_str("block"),
-			Action::Pass => f.write_str("pass"),
+			Action::Pass => f.write_str("pass "),
 		}
 	}
 }
@@ -76,7 +76,7 @@ impl std::str::FromStr for Action {
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		match s {
 			"block" => Ok(Action::Block),
-			"pass " => Ok(Action::Pass),
+			"pass" => Ok(Action::Pass),
 			_ => Err(()),
 		}
 	}
