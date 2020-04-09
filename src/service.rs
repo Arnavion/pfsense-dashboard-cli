@@ -10,7 +10,7 @@ impl Service {
 		builtin_services: impl IntoIterator<Item = String>,
 		installed_package_services: impl IntoIterator<Item = crate::pfconfig::Service>,
 	) -> Result<Box<[Self]>, crate::Error> {
-		let result: Result<Vec<_>, crate::Error> =
+		let result: Result<Box<[_]>, crate::Error> =
 			builtin_services.into_iter()
 			.map(|name| -> Result<_, crate::Error> {
 				let (executable, pidfile) = match &*name {
@@ -37,8 +37,7 @@ impl Service {
 				})
 			})
 			.collect();
-		let result = result?;
-		let mut result = result.into_boxed_slice();
+		let mut result = result?;
 		result.sort_by(|service1, service2| service1.name.cmp(&service2.name));
 		Ok(result)
 	}

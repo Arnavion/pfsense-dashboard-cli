@@ -6,7 +6,7 @@ pub(crate) struct TemperatureSysctl {
 
 impl TemperatureSysctl {
 	pub(crate) fn get_all(session: &ssh2::Session) -> Result<Box<[Self]>, crate::Error> {
-		let result: Result<Vec<_>, crate::Error> =
+		let result: Result<Box<[_]>, crate::Error> =
 			crate::ssh_exec::sysctl_aN::run(session)
 			.filter_map(|sysctl_name| match sysctl_name {
 				Ok(sysctl_name) =>
@@ -23,9 +23,7 @@ impl TemperatureSysctl {
 				Err(err) => Some(Err(err)),
 			})
 			.collect();
-		let result = result?;
-
-		let mut result = result.into_boxed_slice();
+		let mut result = result?;
 		result.sort_by(|temperature_sysctl1, temperature_sysctl2| temperature_sysctl1.name.cmp(&temperature_sysctl2.name));
 		Ok(result)
 	}

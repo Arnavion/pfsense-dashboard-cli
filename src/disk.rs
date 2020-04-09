@@ -10,7 +10,7 @@ pub(crate) struct Disk {
 impl Disk {
 	pub(crate) fn get_all(session: &ssh2::Session) -> Result<Box<[Self]>, crate::Error> {
 		let disk_names = crate::ssh_exec::sysctl_kern_disks::run(session)?;
-		let result: Result<Vec<_>, crate::Error> =
+		let result: Result<Box<[_]>, crate::Error> =
 			disk_names.split(' ')
 			.filter_map(|disk_name| {
 				if disk_name.is_empty() {
@@ -21,9 +21,7 @@ impl Disk {
 				Some(Disk::new(name, session))
 			})
 			.collect();
-		let result = result?;
-
-		let mut result = result.into_boxed_slice();
+		let mut result = result?;
 		result.sort_by(|disk1, disk2| disk1.name.cmp(&disk2.name));
 		Ok(result)
 	}
