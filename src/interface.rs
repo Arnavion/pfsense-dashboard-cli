@@ -59,14 +59,13 @@ impl Interfaces {
 				};
 
 			if let Some(interface) = interface {
-				if !interface_statistics.network.starts_with("<Link#") && !interface_statistics.address.starts_with("fe80:") {
-					let address = interface_statistics.address.parse()?;
-					let _ = interface.addresses.insert(InterfaceAddressOrdered(address));
-				}
-
 				if interface_statistics.network.starts_with("<Link#") {
 					interface.received_bytes += interface_statistics.received_bytes;
 					interface.sent_bytes += interface_statistics.sent_bytes;
+				}
+				else if !interface_statistics.address.starts_with("fe80:") {
+					let address = interface_statistics.address.parse()?;
+					let _ = interface.addresses.insert(InterfaceAddressOrdered(address));
 				}
 			}
 		}
