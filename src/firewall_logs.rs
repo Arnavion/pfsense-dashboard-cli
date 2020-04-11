@@ -23,7 +23,7 @@ impl Logs {
 
 		// Can't multiplex on the same session because ssh2 has internal mutexes to only let one command run at a time.
 		// So create a new connection and session.
-		let session = crate::connect(&ssh.hostname, &ssh.username)?;
+		let session = crate::connect(&ssh.hostname, &ssh.username, None)?;
 
 		let logs = result.clone();
 

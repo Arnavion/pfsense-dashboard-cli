@@ -63,7 +63,7 @@ fn main() -> Result<(), Error> {
 	let mut stdout = stdout.lock();
 
 
-	let session = connect(&config.ssh.hostname, &config.ssh.username)?;
+	let session = connect(&config.ssh.hostname, &config.ssh.username, Some(5000))?;
 
 
 	let pfconfig = pfconfig::PfConfig::load(&session)?;
@@ -529,11 +529,15 @@ enum Endianness {
 	Little,
 }
 
-fn connect(hostname: &str, username: &str) -> Result<ssh2::Session, Error> {
+fn connect(hostname: &str, username: &str, timeout_ms: Option<u32>) -> Result<ssh2::Session, Error> {
 	let conn = std::net::TcpStream::connect(hostname)?;
 
 	let mut session = ssh2::Session::new()?;
 	session.set_tcp_stream(conn);
+	if let Some(timeout_ms) = timeout_ms {
+		session.set_timeout(timeout_ms);
+	}
+
 	session.handshake()?;
 	session.userauth_agent(username)?;
 
