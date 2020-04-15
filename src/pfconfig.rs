@@ -35,11 +35,13 @@ impl PfConfig {
 		let mut interfaces: std::collections::BTreeSet<_> = pfconfig.interfaces.0.into_iter().map(|(_, interface_if)| interface_if).collect();
 		let mut bridge_interfaces = vec![];
 
-		for bridge_name in pfconfig.bridges.0 {
-			bridge_interfaces.push(bridge_name.to_owned());
+		if let Some(bridges) = pfconfig.bridges {
+			for bridge_name in bridges.0 {
+				bridge_interfaces.push(bridge_name.to_owned());
 
-			if !interfaces.remove(bridge_name) {
-				return Err(format!("bridge {} does not exist as an interface", bridge_name).into());
+				if !interfaces.remove(bridge_name) {
+					return Err(format!("bridge {} does not exist as an interface", bridge_name).into());
+				}
 			}
 		}
 
@@ -67,7 +69,7 @@ impl PfConfig {
 
 #[derive(Debug)]
 struct PfSense<'input> {
-	bridges: Bridges<'input>,
+	bridges: Option<Bridges<'input>>,
 	interfaces: Interfaces<'input>,
 	gateways: Gateways<'input>,
 	installed_packages: InstalledPackages<'input>,
@@ -103,7 +105,6 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for PfSense<
 			}
 		}
 
-		let bridges = bridges.ok_or("bridges not found in config.xml")?;
 		let interfaces = interfaces.ok_or("interfaces not found in config.xml")?;
 		let gateways = gateways.ok_or("gateways not found in config.xml")?;
 		let installed_packages = installed_packages.ok_or("installed packages not found in config.xml")?;
