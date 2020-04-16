@@ -17,13 +17,11 @@ impl Memory {
 
 impl crate::Parse for Memory {
 	fn parse<R>(reader: &mut R) -> std::io::Result<Self> where R: std::io::Read {
-		let physical_memory = crate::Parse::parse(reader)?;
-
-		let memory_num_pages = crate::Parse::parse(reader)?;
-
+		let physical = crate::Parse::parse(reader)?;
+		let num_pages = crate::Parse::parse(reader)?;
 		Ok(crate::memory::Memory {
-			physical: physical_memory,
-			num_pages: memory_num_pages,
+			physical,
+			num_pages,
 			used_pages: 0,
 		})
 	}

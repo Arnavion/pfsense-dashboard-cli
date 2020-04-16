@@ -11,8 +11,8 @@ impl Gateways {
 		}
 	}
 
-	pub(crate) fn iter(&self) -> impl Iterator<Item = (&'_ str, Option<&'_ Gateway>)> {
-		self.gateways.iter().map(|(name, gateway)| (name.as_ref(), gateway.as_ref()))
+	pub(crate) fn iter(&self) -> impl Iterator<Item = (&'_ str, Option<Gateway>)> {
+		self.gateways.iter().map(|(name, gateway)| (name.as_ref(), *gateway))
 	}
 
 	pub(crate) fn update(&mut self, session: &ssh2::Session) -> Result<(), crate::Error> {

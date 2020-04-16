@@ -152,14 +152,14 @@ fn main() -> Result<(), Error> {
 		// which is why they're emitted outside the loop and why the loop iteration moves the cursor to 5;1 instead of 1;1.
 		//
 		// The disadvantage of this method is that it relies on the number of output lines being constant.
-		// There are two situations where this assumption doesn't hold:
+		// There are three situations where this assumption doesn't hold:
 		//
 		// - One or more lines exceed the terminal width and wrap. Ensure the terminal is wider than the maximum width.
 		//
 		// - The number of mounted filesystems changes. This is only an issue if you mount or unmount a filesystem dynamically.
 		//   Restart the dashboard when you do that.
 		//
-		// - The number of IPs assigned to any gateway or bridge interfaces. This should only happen if you change your interface settings.
+		// - The number of IPs assigned to any interfaces changes. This should only happen if you change your interface settings.
 		//   Restart the dashboard when you do that.
 
 		output.extend_from_slice(b"\x1B[5;1H");

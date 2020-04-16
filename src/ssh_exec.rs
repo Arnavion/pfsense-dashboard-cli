@@ -1,8 +1,8 @@
 pub(crate) mod batched_sysctls_1 {
 	pub(crate) fn run(session: &ssh2::Session) -> Result<(crate::boot_time::BootTime, crate::memory::Memory), crate::Error> {
 		let mut reader = super::exec_reader(session, "/sbin/sysctl -b kern.boottime hw.physmem vm.stats.vm.v_page_count")?;
-		let boot_time: crate::boot_time::BootTime = crate::Parse::parse(&mut reader)?;
-		let memory: crate::memory::Memory = crate::Parse::parse(&mut reader)?;
+		let boot_time = crate::Parse::parse(&mut reader)?;
+		let memory = crate::Parse::parse(&mut reader)?;
 		Ok((boot_time, memory))
 	}
 }

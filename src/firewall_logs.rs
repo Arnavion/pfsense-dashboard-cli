@@ -6,14 +6,6 @@ pub(crate) struct Logs {
 	head: usize,
 }
 
-#[derive(Debug)]
-pub(crate) struct Log {
-	pub(crate) timestamp: String,
-	pub(crate) interface: String,
-	pub(crate) action: Action,
-	pub(crate) protocol: Protocol,
-}
-
 impl Logs {
 	pub(crate) fn new(interfaces: impl IntoIterator<Item = String>, ssh: &crate::config::Ssh) -> Result<std::sync::Arc<std::sync::Mutex<Self>>, crate::Error> {
 		let result = std::sync::Arc::new(std::sync::Mutex::new(Logs {
@@ -48,17 +40,98 @@ impl Logs {
 	}
 }
 
+#[derive(Debug)]
+pub(crate) struct Log {
+	pub(crate) timestamp: String,
+	pub(crate) interface: String,
+	pub(crate) action: Action,
+	pub(crate) protocol: Protocol,
+}
+
+impl Log {
+	fn from_str(s: &str, interfaces: &std::collections::BTreeSet<String>) -> Result<Self, ()> {
+		// Ref: https://docs.netgate.com/pfsense/en/latest/monitoring/filter-log-format-for-pfsense-2-2.html
+
+		let timestamp = s.get(..("MMM dd HH:mm:ss".len())).ok_or(())?;
+
+		let mut line_parts = s.split(',');
+
+		let interface = line_parts.nth(4).ok_or(())?;
+		if !interfaces.contains(interface) {
+			return Err(());
+		}
+
+		let reason = line_parts.next().ok_or(())?;
+		if reason != "match" {
+			return Err(());
+		}
+
+		let action = line_parts.next().ok_or(())?;
+		let action = action.parse()?;
+
+		let direction = line_parts.next().ok_or(())?;
+		if direction != "in" {
+			return Err(());
+		}
+
+		let ipv4_or_v6 = line_parts.next().ok_or(())?;
+
+		let (protocol_id_offset, source_ip_offset) = match ipv4_or_v6 {
+			"4" => (6, 2),
+			"6" => (4, 1),
+			_ => return Err(()),
+		};
+
+		let protocol_id = line_parts.nth(protocol_id_offset).ok_or(())?;
+
+		let source_ip = line_parts.nth(source_ip_offset).ok_or(())?;
+		let destination_ip = line_parts.next().ok_or(())?;
+
+		let protocol = match protocol_id {
+			"1" | "58" => {
+				let source = ip_addr_from_parts(ipv4_or_v6, source_ip).ok_or(())?;
+
+				let destination = ip_addr_from_parts(ipv4_or_v6, destination_ip).ok_or(())?;
+
+				Protocol::Icmp { source, destination }
+			},
+
+			"6" => {
+				let source_port = line_parts.next().ok_or(())?;
+				let source = socket_addr_from_parts(ipv4_or_v6, source_ip, source_port).ok_or(())?;
+
+				let destination_port = line_parts.next().ok_or(())?;
+				let destination = socket_addr_from_parts(ipv4_or_v6, destination_ip, destination_port).ok_or(())?;
+
+				Protocol::Tcp { source, destination }
+			},
+
+			"17" => {
+				let source_port = line_parts.next().ok_or(())?;
+				let source = socket_addr_from_parts(ipv4_or_v6, source_ip, source_port).ok_or(())?;
+
+				let destination_port = line_parts.next().ok_or(())?;
+				let destination = socket_addr_from_parts(ipv4_or_v6, destination_ip, destination_port).ok_or(())?;
+
+				Protocol::Udp { source, destination }
+			},
+
+			_ => return Err(()),
+		};
+
+		Ok(Log {
+			timestamp: timestamp.to_owned(),
+			interface: interface.to_owned(),
+			action,
+			protocol,
+		})
+	}
+}
+
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum Action {
 	Block,
 	Pass,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum Protocol {
-	Icmp { source: std::net::IpAddr, destination: std::net::IpAddr },
-	Tcp { source: std::net::SocketAddr, destination: std::net::SocketAddr },
-	Udp { source: std::net::SocketAddr, destination: std::net::SocketAddr },
 }
 
 impl std::fmt::Display for Action {
@@ -82,6 +155,13 @@ impl std::str::FromStr for Action {
 	}
 }
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Protocol {
+	Icmp { source: std::net::IpAddr, destination: std::net::IpAddr },
+	Tcp { source: std::net::SocketAddr, destination: std::net::SocketAddr },
+	Udp { source: std::net::SocketAddr, destination: std::net::SocketAddr },
+}
+
 fn log_reader_thread(logs: &std::sync::Mutex<Logs>, session: &ssh2::Session, interfaces: &std::collections::BTreeSet<String>) -> Result<(), crate::Error> {
 	loop {
 		let lines = crate::ssh_exec::clog_filter_log::run(session);
@@ -89,105 +169,13 @@ fn log_reader_thread(logs: &std::sync::Mutex<Logs>, session: &ssh2::Session, int
 		for line in lines {
 			let line = line?;
 
-			// Ref: https://docs.netgate.com/pfsense/en/latest/monitoring/filter-log-format-for-pfsense-2-2.html
-
-			let timestamp = match line.get(..("MMM dd HH:mm:ss".len())) { Some(part) => part, None => continue };
-
-			let mut line_parts = line.split(',');
-
-			let interface = match line_parts.nth(4) { Some(part) => part, None => continue };
-			if !interfaces.contains(interface) {
-				continue;
-			}
-
-			let reason = match line_parts.next() { Some(part) => part, None => continue };
-			if reason != "match" {
-				continue;
-			}
-
-			let action = match line_parts.next() { Some(part) => part, None => continue };
-			let action = match action.parse() {
-				Ok(action) => action,
+			let log = match Log::from_str(&line, interfaces) {
+				Ok(log) => log,
 				Err(()) => continue,
 			};
 
-			let direction = match line_parts.next() { Some(part) => part, None => continue };
-			if direction != "in" {
-				continue;
-			}
-
-			let ipv4_or_v6 = match line_parts.next() { Some(part) => part, None => continue };
-
-			let (protocol_id_offset, source_ip_offset) = match ipv4_or_v6 {
-				"4" => (6, 2),
-				"6" => (4, 1),
-				_ => continue,
-			};
-
-			let protocol_id = match line_parts.nth(protocol_id_offset) { Some(part) => part, None => continue };
-
-			let source_ip = match line_parts.nth(source_ip_offset) { Some(part) => part, None => continue };
-			let destination_ip = match line_parts.next() { Some(part) => part, None => continue };
-
-			let protocol = match protocol_id {
-				"1" | "58" => {
-					let source = match ip_addr_from_parts(ipv4_or_v6, source_ip) {
-						Some(addr) => addr,
-						None => continue,
-					};
-
-					let destination = match ip_addr_from_parts(ipv4_or_v6, destination_ip) {
-						Some(addr) => addr,
-						None => continue,
-					};
-
-					Protocol::Icmp { source, destination }
-				},
-
-				"6" => {
-					let source_port = match line_parts.next() { Some(part) => part, None => continue };
-					let destination_port = match line_parts.next() { Some(part) => part, None => continue };
-
-					let source = match socket_addr_from_parts(ipv4_or_v6, source_ip, source_port) {
-						Some(addr) => addr,
-						None => continue,
-					};
-
-					let destination = match socket_addr_from_parts(ipv4_or_v6, destination_ip, destination_port) {
-						Some(addr) => addr,
-						None => continue,
-					};
-
-					Protocol::Tcp { source, destination }
-				},
-
-				"17" => {
-					let source_port = match line_parts.next() { Some(part) => part, None => continue };
-					let destination_port = match line_parts.next() { Some(part) => part, None => continue };
-
-					let source = match socket_addr_from_parts(ipv4_or_v6, source_ip, source_port) {
-						Some(addr) => addr,
-						None => continue,
-					};
-
-					let destination = match socket_addr_from_parts(ipv4_or_v6, destination_ip, destination_port) {
-						Some(addr) => addr,
-						None => continue,
-					};
-
-					Protocol::Udp { source, destination }
-				},
-
-				_ => continue,
-			};
-
 			let mut logs = logs.lock().expect("could not lock firewall logs queue");
-			logs.push(Log {
-				timestamp: timestamp.to_owned(),
-				interface: interface.to_owned(),
-				action,
-				protocol,
-			});
+			logs.push(log);
 		}
 
 		// `clog -f` returned, for some reason. Restart it.
