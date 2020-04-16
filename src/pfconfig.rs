@@ -3,8 +3,14 @@ pub(crate) struct PfConfig {
 	pub(crate) gateway_interfaces: Vec<String>,
 	pub(crate) bridge_interfaces: Vec<String>,
 	pub(crate) other_interfaces: Vec<String>,
-	pub(crate) gateways: Vec<String>,
+	pub(crate) gateways: Vec<Gateway>,
 	pub(crate) services: Vec<Service>,
+}
+
+#[derive(Debug)]
+pub(crate) struct Gateway {
+	pub(crate) name: String,
+	pub(crate) interface: String,
 }
 
 #[derive(Debug)]
@@ -23,13 +29,16 @@ impl PfConfig {
 		let mut gateways = vec![];
 
 		for (gateway_name, gateway_interface) in pfconfig.gateways.0 {
-			gateways.push(gateway_name.to_owned());
-
 			let r#if =
 				pfconfig.interfaces.0
 				.remove(gateway_interface)
 				.ok_or_else(|| format!("gateway {} is defined on interface {} but this interface does not exist", gateway_name, gateway_interface))?;
 			gateway_interfaces.push(r#if.to_owned());
+
+			gateways.push(Gateway {
+				name: gateway_name.to_owned(),
+				interface: r#if.to_owned(),
+			});
 		}
 
 		let mut interfaces: std::collections::BTreeSet<_> = pfconfig.interfaces.0.into_iter().map(|(_, interface_if)| interface_if).collect();
@@ -231,7 +240,7 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Gateways
 			node.children()
 			.filter_map(|child|
 				if child.tag_name() == gateway_item_tag_name {
-					let Gateway { name, interface } = match std::convert::TryInto::try_into(child) {
+					let GatewayItem { name, interface } = match std::convert::TryInto::try_into(child) {
 						Ok(gateway) => gateway,
 						Err(err) => return Some(Err(err)),
 					};
@@ -248,12 +257,12 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Gateways
 }
 
 #[derive(Debug)]
-struct Gateway<'input> {
+struct GatewayItem<'input> {
 	name: &'input str,
 	interface: &'input str,
 }
 
-impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Gateway<'input> {
+impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for GatewayItem<'input> {
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
@@ -266,7 +275,7 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Gateway<
 		let name = node.children().find(|node| node.tag_name() == name_tag_name).ok_or("gateways.gateway_item.name not found in config.xml")?;
 		let name = name.text().ok_or("gateways.gateway_item.name is not a text node")?;
 
-		Ok(Gateway {
+		Ok(GatewayItem {
 			interface,
 			name,
 		})

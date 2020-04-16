@@ -36,8 +36,8 @@ Interfaces       :     em0 :   1.3 Kb/s down   1.8 Kb/s up ***.***.***.***
                       igb1 : no carrier
                       igb2 :   13.3 Kb/s down    5.1 Kb/s up
                       igb3 :  141.5 Kb/s down  376.0 Kb/s up
-Gateways         :        WAN_DHCP : ping RTT   19.7 ms (   1.8 ms), packet loss   0 %
-                   WAN_HE_TUNNELV6 : ping RTT   19.7 ms (   0.5 ms), packet loss   0 %
+Gateways         :  em0 :   19.7 ms (   1.8 ms),   0 %
+                   gif0 :   19.7 ms (   0.5 ms),   0 %
 
 Services         : dhcpd       pfb_dnsbl   radvd       syslogd
                    ntpd        pfb_filter  sshd        unbound
