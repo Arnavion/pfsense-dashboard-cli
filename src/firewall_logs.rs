@@ -31,7 +31,7 @@ impl Logs {
 
 		let _ = std::thread::spawn(move || if let Err(err) = log_reader_thread(&logs, &session, &interfaces) {
 			eprintln!("{:?}", err);
-			std::process::abort();
+			std::process::exit(1);
 		});
 
 		Ok(result)
