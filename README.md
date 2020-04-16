@@ -27,15 +27,17 @@ Temperatures  :           dev.cpu.0.temperature :  29.0 °C
                 hw.acpi.thermal.tz1.temperature :  29.9 °C
                                            ada0 :  27.0 °C
 
-Interfaces    :     em0 :   1.3 Kb/s down   1.8 Kb/s up ***.***.***.***
-                   gif0 :   0    b/s down   0    b/s up ****:***:****:****::*
-                bridge0 :                               ****:***:****:****::1
-                                                        10.10.10.1
-                                                        192.168.1.1
-                   igb0 : no carrier
-                   igb1 : no carrier
-                   igb2 :   13.3 Kb/s down    5.1 Kb/s up
-                   igb3 :  141.5 Kb/s down  376.0 Kb/s up
+Interfaces    :  em0 :  26.1 Mb/s down 666.8 Kb/s up ***.***.***.***
+                gif0 :   3.9 Mb/s down 109.1 Kb/s up ****:****:****:****::2
+                igb0 : no carrier                    ****:****:****:1::1
+                                                     10.10.10.1
+                                                     192.168.1.1
+                igb1 : 133.3 Kb/s down 361.0 Kb/s up ****:****:****:2::1
+                                                     192.168.2.1
+                igb2 :  11.1 Kb/s down   3.6 Kb/s up ****:****:****:3::1
+                                                     192.168.3.1
+                igb3 : 677.5 Kb/s down  26.2 Mb/s up ****:****:****:4::1
+                                                     192.168.4.1
 Gateways      :  em0 :   19.7 ms (   1.8 ms),   0 %
                 gif0 :   19.7 ms (   0.5 ms),   0 %
 
