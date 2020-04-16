@@ -74,13 +74,13 @@ fn main() -> Result<(), Error> {
 	{
 		let version_info::VersionInfo { version, version_patch, arch, os_release_date, os_base_version } = version_info::VersionInfo::get(&session)?;
 		if version_patch == "0" {
-			writeln!(stdout, "Version          : {} ({})", version, arch)?;
+			writeln!(stdout, "Version       : {} ({})", version, arch)?;
 		}
 		else {
-			writeln!(stdout, "Version          : {}-p{} ({})", version, version_patch, arch)?;
+			writeln!(stdout, "Version       : {}-p{} ({})", version, version_patch, arch)?;
 		}
-		writeln!(stdout, "                   built on {}", os_release_date)?;
-		writeln!(stdout, "                   based on {}", os_base_version)?;
+		writeln!(stdout, "                built on {}", os_release_date)?;
+		writeln!(stdout, "                based on {}", os_base_version)?;
 		writeln!(stdout)?;
 	}
 
@@ -170,7 +170,7 @@ fn main() -> Result<(), Error> {
 			let uptime = uptime.as_secs();
 			write!(
 				output,
-				"\x1B[KUptime           : {} days {:02}:{:02}:{:02}",
+				"\x1B[KUptime        : {} days {:02}:{:02}:{:02}",
 				uptime / (24 * 60 * 60),
 				(uptime % (24 * 60 * 60)) / (60 * 60),
 				(uptime % (60 * 60)) / 60,
@@ -183,19 +183,20 @@ fn main() -> Result<(), Error> {
 
 
 		{
+			output.extend_from_slice(b"\n\x1B[KCPU usage     : ");
 			if let Some(cpu_usage_percent) = cpu.usage_percent() {
 				let cpu_usage_color = get_color_for_usage(cpu_usage_percent);
-				write!(output, "\n\x1B[KCPU usage        : \x1B[{}m{:5.1} %\x1B[0m", cpu_usage_color, cpu_usage_percent)?;
+				write!(output, "\x1B[{}m{:5.1} %\x1B[0m", cpu_usage_color, cpu_usage_percent)?;
 			}
 			else {
-				output.extend_from_slice(b"\n\x1B[KCPU usage        :     ? %");
+				output.extend_from_slice(b"    ? %");
 			}
 		}
 
 
 		{
 			let (memory_usage_percent, memory_usage_color) = usage(memory.used_pages as f32, memory.num_pages as f32);
-			write!(output, "\n\x1B[KMemory usage     : \x1B[{}m{:5.1} % of {} MiB\x1B[0m", memory_usage_color, memory_usage_percent, memory.physical / 1_048_576)?;
+			write!(output, "\n\x1B[KMemory usage  : \x1B[{}m{:5.1} % of {} MiB\x1B[0m", memory_usage_color, memory_usage_percent, memory.physical / 1_048_576)?;
 		}
 
 
@@ -203,19 +204,19 @@ fn main() -> Result<(), Error> {
 			let states_used = ssh_exec::pfctl_s_info::get_states_used(&session)?;
 			let states_max = (memory.physical / 10_485_760) * 1000;
 			let (states_usage_percent, states_usage_color) = usage(states_used as f32, states_max as f32);
-			write!(output, "\n\x1B[KState table size : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", states_usage_color, states_usage_percent, states_used, states_max)?;
+			write!(output, "\n\x1B[KStates table  : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", states_usage_color, states_usage_percent, states_used, states_max)?;
 		}
 
 
 		{
 			let ssh_exec::netstat_m::MBufStatistics { cluster_total: mbufs_used, cluster_max: mbufs_max } = ssh_exec::netstat_m::get_mbuf_statistics(&session)?;
 			let (mbufs_usage_percent, mbufs_usage_color) = usage(mbufs_used as f32, mbufs_max as f32);
-			write!(output, "\n\x1B[KMBUF usage       : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", mbufs_usage_color, mbufs_usage_percent, mbufs_used, mbufs_max)?;
+			write!(output, "\n\x1B[KMBUF usage    : \x1B[{}m{:5.1} % ({:7} / {:7})\x1B[0m", mbufs_usage_color, mbufs_usage_percent, mbufs_used, mbufs_max)?;
 		}
 
 
 		{
-			output.extend_from_slice(b"\n\x1B[KDisk usage       : ");
+			output.extend_from_slice(b"\n\x1B[KDisk usage    : ");
 			let filesystems = ssh_exec::df::get_filesystems(&session)?;
 			let max_mount_point_len = filesystems.iter().map(|filesystem| filesystem.mounted_on.len()).max().unwrap_or_default();
 			for (i, filesystem) in filesystems.into_iter().enumerate() {
@@ -223,7 +224,7 @@ fn main() -> Result<(), Error> {
 				let filesystem_space_max = filesystem.total_blocks;
 				let (filesystem_space_usage_percent, filesystem_space_usage_color) = usage(filesystem_space_used as f32, filesystem_space_max as f32);
 				if i > 0 {
-					output.extend_from_slice(b"\n\x1B[K                   ");
+					output.extend_from_slice(b"\n\x1B[K                ");
 				}
 
 				write!(output,
@@ -239,13 +240,13 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			output.extend_from_slice(b"\n\x1B[KSMART status     : ");
+			output.extend_from_slice(b"\n\x1B[KSMART status  : ");
 			for (i, disk::Disk { name, serial_number, smart_passed, .. }) in disks.iter().enumerate() {
 				let disk_status_color = get_color_for_up_down(*smart_passed);
 				let disk_smart_status = if *smart_passed { "PASSED" } else { "FAILED" };
 
 				if i > 0 {
-					output.extend_from_slice(b"\n\x1B[K                   ");
+					output.extend_from_slice(b"\n\x1B[K                ");
 				}
 
 				write!(
@@ -266,7 +267,7 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			output.extend_from_slice(b"\n\x1B[KTemperatures     : ");
+			output.extend_from_slice(b"\n\x1B[KTemperatures  : ");
 
 			let thermal_sensors =
 				temperature_sysctls.iter().map(|temperature_sysctl::TemperatureSysctl { name, value }| {
@@ -282,7 +283,7 @@ fn main() -> Result<(), Error> {
 				let thermal_sensor_color = get_color_for_temperature(thermal_sensor_value);
 
 				if i > 0 {
-					output.extend_from_slice(b"\n\x1B[K                   ");
+					output.extend_from_slice(b"\n\x1B[K                ");
 				}
 
 				write!(
@@ -301,11 +302,11 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			output.extend_from_slice(b"\n\x1B[KInterfaces       : ");
+			output.extend_from_slice(b"\n\x1B[KInterfaces    : ");
 
 			for (i, (interface_name, interface, is_bridge)) in interfaces.iter_mut().enumerate() {
 				if i > 0 {
-					output.extend_from_slice(b"\n\x1B[K                   ");
+					output.extend_from_slice(b"\n\x1B[K                ");
 				}
 
 				if let Some(interface_error) = &interface.error {
@@ -349,7 +350,7 @@ fn main() -> Result<(), Error> {
 						if i > 0 {
 							write!(
 								output,
-								"\n\x1B[K                   \x1B[{}m{:>max_interface_name_len$}                                 ",
+								"\n\x1B[K                \x1B[{}m{:>max_interface_name_len$}                                 ",
 								interface_status_color,
 								"",
 								max_interface_name_len = max_interface_name_len,
@@ -364,11 +365,11 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			output.extend_from_slice(b"\n\x1B[KGateways         : ");
+			output.extend_from_slice(b"\n\x1B[KGateways      : ");
 
 			for (i, (interface, gateway)) in gateways.iter().enumerate() {
 				if i > 0 {
-					output.extend_from_slice(b"\n\x1B[K                   ");
+					output.extend_from_slice(b"\n\x1B[K                ");
 				}
 
 				match gateway {
@@ -397,7 +398,7 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			output.extend_from_slice(b"\n\x1B[KServices         :");
+			output.extend_from_slice(b"\n\x1B[KServices      :");
 
 			for i in 0..num_services_rows {
 				for j in 0..num_services_per_row {
@@ -410,7 +411,7 @@ fn main() -> Result<(), Error> {
 					let service_color = get_color_for_up_down(service.is_running);
 
 					if i > 0 && j == 0 {
-						output.extend_from_slice(b"\n\x1B[K                  ");
+						output.extend_from_slice(b"\n\x1B[K               ");
 					}
 
 					write!(
@@ -429,12 +430,12 @@ fn main() -> Result<(), Error> {
 
 
 		{
-			output.extend_from_slice(b"\n\x1B[KFirewall logs    : ");
+			output.extend_from_slice(b"\n\x1B[KFirewall logs : ");
 
 			let firewall_logs = firewall_logs.lock().expect("could not lock firewall logs queue");
 			for (i, firewall_log) in firewall_logs.iter().enumerate() {
 				if i > 0 {
-					output.extend_from_slice(b"\n\x1B[K                   ");
+					output.extend_from_slice(b"\n\x1B[K                ");
 				}
 
 				let firewall_log_color = get_color_for_up_down(match firewall_log.action {
