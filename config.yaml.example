@@ -10,13 +10,21 @@ ssh:
   username: 'root'
 
 
-# Built-in services to monitor.
-#
-# Services from installed packages will be automatically detected and should not be listed here.
-builtin_services:
-- 'dhcpd'
-- 'ntpd'
-- 'radvd'
-- 'sshd'
-- 'syslogd'
-- 'unbound'
+# Services to monitor.
+services:
+  # Built-in services to monitor.
+  builtin:
+  - 'dhcpd'
+  - 'ntpd'
+  - 'radvd'
+  - 'sshd'
+  - 'syslogd'
+  - 'unbound'
+
+  # Custom services to monitor. The pidfile for each entry is optional.
+  #
+  # Services from installed packages will be automatically detected and should not be listed here.
+  custom:
+  - name: 'tayga'
+    executable: 'tayga'
+    pidfile: '/var/run/tayga.pid'

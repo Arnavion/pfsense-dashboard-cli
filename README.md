@@ -41,8 +41,8 @@ Interfaces    :  em0 :  26.1 Mb/s down 666.8 Kb/s up ***.***.***.***
 Gateways      :  em0 :   19.7 ms (   1.8 ms),   0 %
                 gif0 :   19.7 ms (   0.5 ms),   0 %
 
-Services      : dhcpd       pfb_dnsbl   radvd       syslogd
-                ntpd        pfb_filter  sshd        unbound
+Services      : dhcpd       pfb_dnsbl   radvd       syslogd     unbound
+                ntpd        pfb_filter  sshd        tayga
 
 Firewall logs : Mar 29 15:27:24 em0  block 26063/udp <- 186.79.169.243
                 Mar 29 15:27:14 em0  block 20168/tcp <- 194.26.29.129

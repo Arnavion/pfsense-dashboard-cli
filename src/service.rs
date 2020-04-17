@@ -7,23 +7,34 @@ pub(crate) struct Service {
 
 impl Service {
 	pub(crate) fn get_all(
-		builtin_services: impl IntoIterator<Item = String>,
+		services: Option<crate::config::Services>,
 		installed_package_services: impl IntoIterator<Item = crate::pfconfig::Service>,
 	) -> Result<Box<[Self]>, crate::Error> {
+		let (builtin_services, custom_services) = match services {
+			Some(crate::config::Services { builtin, custom }) => (Some(builtin), Some(custom)),
+			None => (None, None),
+		};
+
 		let result: Result<Box<[_]>, crate::Error> =
 			builtin_services.into_iter()
+			.flatten()
 			.map(|name| -> Result<_, crate::Error> {
 				let (executable, pidfile) = match &*name {
 					"dhcpd" => ("dhcpd", None),
-					"ntpd" => ("ntpd", Some("ntpd.pid")),
-					"radvd" => ("radvd", Some("radvd.pid")),
-					"sshd" => ("sshd", Some("sshd.pid")),
-					"syslogd" => ("syslogd", Some("syslog.pid")),
-					"unbound" => ("unbound", Some("unbound.pid")),
+					"ntpd" => ("ntpd", Some("/var/run/ntpd.pid")),
+					"radvd" => ("radvd", Some("/var/run/radvd.pid")),
+					"sshd" => ("sshd", Some("/var/run/sshd.pid")),
+					"syslogd" => ("syslogd", Some("/var/run/syslog.pid")),
+					"unbound" => ("unbound", Some("/var/run/unbound.pid")),
 					name => return Err(format!("{:?} is not recognized as a built-in service", name).into()),
 				};
 				Ok((name, executable.to_owned(), pidfile.map(ToOwned::to_owned)))
 			})
+			.chain(
+				custom_services.into_iter()
+				.flatten()
+				.map(|crate::config::CustomService { name, executable, pidfile }| Ok::<_, crate::Error>((name, executable, pidfile)))
+			)
 			.chain(
 				installed_package_services.into_iter()
 				.map(|crate::pfconfig::Service { name, executable }| Ok::<_, crate::Error>((name, executable, None)))
