@@ -5,8 +5,8 @@ The pfSense status dashboard in your terminal instead of a web browser.
 
 ```
 Version       : 2.4.5-RELEASE (amd64)
-                   built on Tue Mar 24 15:25:50 EDT 2020
-                   based on FreeBSD 11.3-STABLE
+                built on Tue Mar 24 15:25:50 EDT 2020
+                based on FreeBSD 11.3-STABLE
 
 Uptime        : 3 days 00:53:03
 
@@ -15,8 +15,8 @@ Memory usage  :   8.4 % of 32609 MiB
 States table  :   0.0 % (    211 / 3260000)
 MBUF usage    :   2.0 % (  20496 / 1000000)
 Disk usage    :    / :   0.5 % of 247.5 GB
-                   /tmp :   0.1 % of   1.0 GB
-                   /var :   2.6 % of   1.0 GB
+                /tmp :   0.1 % of   1.0 GB
+                /var :   2.6 % of   1.0 GB
 SMART status  : ada0 S0Z4NEAC948908 PASSED
 
 Temperatures  :           dev.cpu.0.temperature :  29.0 °C
