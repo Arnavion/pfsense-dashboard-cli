@@ -88,10 +88,10 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for PfSense<
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let bridges_tag_name: roxmltree::ExpandedName<'_> = "bridges".into();
-		let interfaces_tag_name: roxmltree::ExpandedName<'_> = "interfaces".into();
-		let gateways_tag_name: roxmltree::ExpandedName<'_> = "gateways".into();
-		let installed_packages_tag_name: roxmltree::ExpandedName<'_> = "installedpackages".into();
+		let bridges_tag_name: roxmltree::ExpandedName<'_, '_> = "bridges".into();
+		let interfaces_tag_name: roxmltree::ExpandedName<'_, '_> = "interfaces".into();
+		let gateways_tag_name: roxmltree::ExpandedName<'_, '_> = "gateways".into();
+		let installed_packages_tag_name: roxmltree::ExpandedName<'_, '_> = "installedpackages".into();
 
 		let mut bridges = None;
 		let mut interfaces = None;
@@ -134,7 +134,7 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Bridges<
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let bridge_tag_name: roxmltree::ExpandedName<'_> = "bridged".into();
+		let bridge_tag_name: roxmltree::ExpandedName<'_, '_> = "bridged".into();
 
 		let inner: Result<_, crate::Error> =
 			node.children()
@@ -165,7 +165,7 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Bridge<'
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let bridgeif_tag_name: roxmltree::ExpandedName<'_> = "bridgeif".into();
+		let bridgeif_tag_name: roxmltree::ExpandedName<'_, '_> = "bridgeif".into();
 
 		let bridgeif = node.children().find(|node| node.tag_name() == bridgeif_tag_name).ok_or("bridges.*.bridgeif not found in config.xml")?;
 		let bridgeif = bridgeif.text().ok_or("bridges.*.bridgeif is not a text node")?;
@@ -213,7 +213,7 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Interfac
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let if_tag_name: roxmltree::ExpandedName<'_> = "if".into();
+		let if_tag_name: roxmltree::ExpandedName<'_, '_> = "if".into();
 
 		let name = node.tag_name().name();
 
@@ -234,7 +234,7 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Gateways
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let gateway_item_tag_name: roxmltree::ExpandedName<'_> = "gateway_item".into();
+		let gateway_item_tag_name: roxmltree::ExpandedName<'_, '_> = "gateway_item".into();
 
 		let inner: Result<_, crate::Error> =
 			node.children()
@@ -266,8 +266,8 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for GatewayI
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let interface_tag_name: roxmltree::ExpandedName<'_> = "interface".into();
-		let name_tag_name: roxmltree::ExpandedName<'_> = "name".into();
+		let interface_tag_name: roxmltree::ExpandedName<'_, '_> = "interface".into();
+		let name_tag_name: roxmltree::ExpandedName<'_, '_> = "name".into();
 
 		let interface = node.children().find(|node| node.tag_name() == interface_tag_name).ok_or("gateways.gateway_item.interface not found in config.xml")?;
 		let interface = interface.text().ok_or("gateways.gateway_item.interface is not a text node")?;
@@ -289,7 +289,7 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Installe
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let service_tag_name: roxmltree::ExpandedName<'_> = "service".into();
+		let service_tag_name: roxmltree::ExpandedName<'_, '_> = "service".into();
 
 		let inner: Result<_, crate::Error> =
 			node.children()
@@ -321,8 +321,8 @@ impl<'input> std::convert::TryFrom<roxmltree::Node<'input, 'input>> for Installe
 	type Error = crate::Error;
 
 	fn try_from(node: roxmltree::Node<'input, 'input>) -> Result<Self, Self::Error> {
-		let name_tag_name: roxmltree::ExpandedName<'_> = "name".into();
-		let executable_tag_name: roxmltree::ExpandedName<'_> = "executable".into();
+		let name_tag_name: roxmltree::ExpandedName<'_, '_> = "name".into();
+		let executable_tag_name: roxmltree::ExpandedName<'_, '_> = "executable".into();
 
 		let name = node.children().find(|node| node.tag_name() == name_tag_name).ok_or("installedpackages.service.name not found in config.xml")?;
 		let name = name.text().ok_or("installedpackages.service.name is not a text node")?;
