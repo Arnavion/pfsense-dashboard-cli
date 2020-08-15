@@ -104,11 +104,11 @@ pub(crate) mod dpinger {
 				let name = line_parts.next().ok_or("dpinger output is malformed")?;
 
 				let latency_average: crate::c_ulong = line_parts.next().ok_or("dpinger output is malformed")?.parse()?;
-				#[allow(clippy::identity_conversion)] // c_ulong -> u64 is not necessarily identity conversion
+				#[allow(clippy::useless_conversion)] // c_ulong -> u64 is not necessarily identity conversion
 				let latency_average = std::time::Duration::from_micros(latency_average.into());
 
 				let latency_stddev: crate::c_ulong = line_parts.next().ok_or("dpinger output is malformed")?.parse()?;
-				#[allow(clippy::identity_conversion)] // c_ulong -> u64 is not necessarily identity conversion
+				#[allow(clippy::useless_conversion)] // c_ulong -> u64 is not necessarily identity conversion
 				let latency_stddev = std::time::Duration::from_micros(latency_stddev.into());
 
 				let ping_packet_loss: crate::c_ulong = line_parts.next().ok_or("dpinger output is malformed")?.parse()?;

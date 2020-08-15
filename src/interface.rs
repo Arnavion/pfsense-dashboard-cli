@@ -44,6 +44,7 @@ impl Interfaces {
 
 		for interface_statistics in interface_statistics {
 			let interface_name = interface_statistics.name;
+			#[allow(clippy::option_if_let_else)]
 			let interface =
 				if let Some(interface) = self.gateways.get_mut(&interface_name) {
 					Some(interface)
