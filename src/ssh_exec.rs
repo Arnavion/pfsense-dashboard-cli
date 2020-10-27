@@ -221,7 +221,7 @@ pub(crate) mod pfctl_s_info {
 				},
 				Err(err) => Some(Err(err)),
 			})
-			.ok_or_else(|| "could not read state table size")??
+			.ok_or("could not read state table size")??
 			.parse()?;
 		Ok(states_used)
 	}

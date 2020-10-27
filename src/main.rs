@@ -125,7 +125,9 @@ fn main() -> Result<(), Error> {
 
 	loop {
 		let now = std::time::SystemTime::now();
-		let time_since_previous = now.duration_since(previous).map_err(|_| "could not calculate time since previous iteration")?;
+		let time_since_previous =
+			now.duration_since(previous)
+			.map_err(|err| format!("could not calculate time since previous iteration: {}", err))?;
 
 
 		batched_sysctls_exec.run(&mut cpu, &mut memory, &mut temperature_sysctls[..], &session)?;
