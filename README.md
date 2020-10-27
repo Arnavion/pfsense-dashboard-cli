@@ -38,8 +38,9 @@ Interfaces    :  em0 :  26.1 Mb/s down 666.8 Kb/s up ***.***.***.***
                                                      192.168.3.1
                 igb3 : 677.5 Kb/s down  26.2 Mb/s up ****:****:****:4::1
                                                      192.168.4.1
-Gateways      :  em0 :   19.7 ms (   1.8 ms),   0 %
-                gif0 :   19.7 ms (   0.5 ms),   0 %
+Gateways      :     HE :   19.7 ms (   1.8 ms),   0 %
+                ISP_V4 :   19.7 ms (   0.5 ms),   0 %
+                ISP_V6 : dpinger is not running
 
 Services      : dhcpd       pfb_dnsbl   radvd       syslogd     unbound
                 ntpd        pfb_filter  sshd        tayga

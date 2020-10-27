@@ -109,7 +109,7 @@ fn main() -> Result<(), Error> {
 	let max_interface_name_len = interfaces.names().map(str::len).max().unwrap_or_default();
 
 	let mut gateways = gateway::Gateways::new(pfconfig.gateways);
-	let max_gateway_interface_len = gateways.iter().map(|(interface, _)| interface.len()).max().unwrap_or_default();
+	let max_gateway_name_len = gateways.iter().map(|(name, _)| name.len()).max().unwrap_or_default();
 
 	let mut services = service::Service::get_all(config.services, pfconfig.services)?;
 	let max_service_name_len = services.iter().map(|service::Service { name, .. }| name.len()).max().unwrap_or_default();
@@ -354,7 +354,7 @@ fn main() -> Result<(), Error> {
 		{
 			output.extend_from_slice(b"\n\x1B[KGateways      : ");
 
-			for (i, (interface, gateway)) in gateways.iter().enumerate() {
+			for (i, (name, gateway)) in gateways.iter().enumerate() {
 				if i > 0 {
 					output.extend_from_slice(b"\n\x1B[K                ");
 				}
@@ -362,19 +362,19 @@ fn main() -> Result<(), Error> {
 				match gateway {
 					Some(gateway::Gateway { latency_average, latency_stddev, ping_packet_loss }) => write!(
 						output,
-						"{:>max_gateway_interface_len$} : {:6.1} ms ({:6.1} ms) {:3} %",
-						interface,
+						"{:>max_gateway_name_len$} : {:6.1} ms ({:6.1} ms) {:3} %",
+						name,
 						latency_average.as_secs_f32() * 1000.,
 						latency_stddev.as_secs_f32() * 1000.,
 						ping_packet_loss,
-						max_gateway_interface_len = max_gateway_interface_len,
+						max_gateway_name_len = max_gateway_name_len,
 					)?,
 
 					None => write!(
 						output,
-						"{:>max_gateway_interface_len$} : dpinger is not running",
-						interface,
-						max_gateway_interface_len = max_gateway_interface_len,
+						"{:>max_gateway_name_len$} : dpinger is not running",
+						name,
+						max_gateway_name_len = max_gateway_name_len,
 					)?,
 				}
 			}

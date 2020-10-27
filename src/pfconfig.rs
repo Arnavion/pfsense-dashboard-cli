@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub(crate) struct PfConfig {
-	pub(crate) gateway_interfaces: Vec<String>,
+	pub(crate) gateway_interfaces: std::collections::BTreeSet<String>,
 	pub(crate) bridge_interfaces: Vec<String>,
 	pub(crate) other_interfaces: Vec<String>,
 	pub(crate) gateways: Vec<Gateway>,
@@ -10,7 +10,6 @@ pub(crate) struct PfConfig {
 #[derive(Debug)]
 pub(crate) struct Gateway {
 	pub(crate) name: String,
-	pub(crate) interface: String,
 }
 
 #[derive(Debug)]
@@ -25,20 +24,23 @@ impl PfConfig {
 		let pfconfig = roxmltree::Document::parse(&pfconfig)?;
 		let mut pfconfig: PfSense<'_> = std::convert::TryInto::try_into(pfconfig.root_element())?;
 
-		let mut gateway_interfaces = vec![];
+		let mut gateway_interfaces: std::collections::BTreeSet<_> = Default::default();
 		let mut gateways = vec![];
 
-		for (gateway_name, gateway_interface) in pfconfig.gateways.0 {
-			let r#if =
+		for (&gateway_name, &gateway_interface) in &pfconfig.gateways.0 {
+			let &r#if =
 				pfconfig.interfaces.0
-				.remove(gateway_interface)
+				.get(gateway_interface)
 				.ok_or_else(|| format!("gateway {} is defined on interface {} but this interface does not exist", gateway_name, gateway_interface))?;
-			gateway_interfaces.push(r#if.to_owned());
+			gateway_interfaces.insert(r#if.to_owned());
 
 			gateways.push(Gateway {
 				name: gateway_name.to_owned(),
-				interface: r#if.to_owned(),
 			});
+		}
+
+		for (_, gateway_interface) in pfconfig.gateways.0 {
+			let _ = pfconfig.interfaces.0.remove(gateway_interface);
 		}
 
 		let mut interfaces: std::collections::BTreeSet<_> = pfconfig.interfaces.0.into_iter().map(|(_, interface_if)| interface_if).collect();
