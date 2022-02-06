@@ -1,5 +1,7 @@
 This is no longer maintained since I've switched to OPNsense, and ported this to [opnsense-dashboard-cli](https://github.com/Arnavion/opnsense-dashboard-cli)
 
+If you have questions about this repository, open an issue at https://github.com/Arnavion/archived-repos-issues
+
 ---
 
 The pfSense status dashboard in your terminal instead of a web browser.
